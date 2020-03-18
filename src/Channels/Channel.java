@@ -7,7 +7,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-public class Channel {
+public class Channel extends Thread {
     private Peer peer;
     private int port;
     private InetAddress address;
@@ -24,6 +24,11 @@ public class Channel {
         this.multicastSocket.joinGroup(this.address);
     }
 
+    public void run(){
+
+        while
+    }
+
     // Receive messages
     public void receiveMessage() throws IOException {
         byte[] buf = new byte[64500];
@@ -38,7 +43,14 @@ public class Channel {
     }
 
     public void sendMessage(Message message) throws IOException {
-        DatagramPacket packet = new DatagramPacket(message.to, message.length, this.address, this.port);
+        byte[] messageBytes = message.toString().getBytes();
+        DatagramPacket packet = new DatagramPacket(messageBytes, messageBytes.length, this.address, this.port);
+        this.multicastSocket.send(packet);
+    }
+
+    public void sendMessage(String message) throws IOException {
+        byte[] messageBytes = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(messageBytes, messageBytes.length, this.address, this.port);
         this.multicastSocket.send(packet);
     }
 
@@ -46,8 +58,6 @@ public class Channel {
     public Peer getPeer() {
         return this.peer;
     }
-
-
     public void closeSocket() {
         this.multicastSocket.close();
     }

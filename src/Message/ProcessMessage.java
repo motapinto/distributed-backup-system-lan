@@ -12,35 +12,38 @@ import java.net.InetAddress;
 public class ProcessMessage {
     private Peer peer;
     private Message message;
-    private String address;
-    private int port;
 
     public ProcessMessage(Peer peer, byte[] message) {
         this.peer = peer;
         this.message = new Message(message);
     }
 
-    public ProcessMessage(Peer peer, byte[] message, int port, String address) {
+    public ProcessMessage(Peer peer, byte[] message, Channel channel) {
         this.peer = peer;
         this.message = new Message(message);
-        this.port = port;
-        this.address = address;
     }
 
-    // Sends message to multicast channel - meter aquilos dos params nas funcoes
-    /*public void sendMessage(Message message, String address, int port) {
-        DatagramSocket socket;
-        DatagramPacket packet;
+    public void dispatchMessage(){
 
-        try {
-            socket = new DatagramSocket();
-            packet = new DatagramPacket(message.toString().getBytes(), message.toString().getBytes().length, InetAddress.getByName(this.address), port);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-    }*/
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
 
 
 }

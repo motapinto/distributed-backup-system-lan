@@ -1,7 +1,9 @@
 package Channels;
 
+import Peer.Peer;
+
 public class MDR extends Channel{
-    MDR() {
-        super();
+    public MDR(Peer peer, String address, int port) {
+        super(peer, address, port);
     }
 }

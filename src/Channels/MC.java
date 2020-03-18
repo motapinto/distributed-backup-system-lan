@@ -1,7 +1,9 @@
 package Channels;
 
+import Peer.Peer;
+
 public class MC extends Channel {
-    MC() {
-        super();
+    public MC(Peer peer, String address, int port) {
+        super(peer, address, port);
     }
 }

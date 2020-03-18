@@ -19,12 +19,6 @@ public class Message {
         this.parseMessage(packet.toString().getBytes());
     }
 
-    @Override
-    public String toString() {
-        String header = this.header.toString();
-        return(this.body == null) ? header : header + CRLF + CRLF + this.body;
-    }
-
     private void parseMessage(byte[] bytes)  {
         String[] message = (new String(bytes)).split(CRLF + CRLF);
         String body = message[1];
@@ -73,6 +67,12 @@ public class Message {
             default:
                 break;
         }
+    }
+
+    @Override
+    public String toString() {
+        String header = this.header.toString();
+        return(this.body == null) ? header : header + CRLF + CRLF + this.body;
     }
 
     public Header getHeader() {

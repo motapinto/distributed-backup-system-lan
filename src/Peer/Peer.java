@@ -1,20 +1,13 @@
 package Peer;
 
 import Channels.*;
+import SubProtocols.Backup;
+
+import static Common.Constants.*;
 
 
-
-public class Peer {
-
-
-    /* Maximum storage allowed by a peer */
-    public static final int MAX_DELAY = 400;
-    public static final int MAX_MEMORY = 8000000 // 8MB
-    public static final int PUTCHUNK_RETRIES = 5;
-    public static final int MAX_CHUNK_SIZE = 64000; // 64 Kb
-    public static final int MAX_REPLICATION_DEGREE = 9;
-    public static final int MAX_NUM_CHUNKS = 1000000;
-    public static final String FILE_STORAGE_PATH = '../../storage'
+public class Peer implements PeerInterface{
+    public static final String FILE_STORAGE_PATH = "../../storage";
 
     private String version;
     private int id;
@@ -39,15 +32,12 @@ public class Peer {
         this.controlChannel = new MC(this, mcAddress[0], mcAddress[1]);
         this.backupChannel = new MDB(this, mdbAddress[0], mdbAddress[1]);
         this.restoreChannel = new MDR(this, mdrAddresss[0], mdrAddresss[1]);
-
-
-
-
     }
 
 
     public void backup(){
-
+        Backup backup = new Backup();
+        backup....()
 
     }
 
@@ -66,5 +56,39 @@ public class Peer {
 
     }
 
+    public int getAvailableStorage() {
+        return MAX_CHUNK_SIZE -  this.currentSystemMemory;
+    }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String[] getServiceAccessPoint() {
+        return serviceAccessPoint;
+    }
+
+    public Channel getControlChannel() {
+        return controlChannel;
+    }
+
+    public Channel getBackupChannel() {
+        return backupChannel;
+    }
+
+    public Channel getRestoreChannel() {
+        return restoreChannel;
+    }
+
+    public int getCurrentSystemMemory() {
+        return currentSystemMemory;
+    }
+
+    public void setCurrentSystemMemory(int currentSystemMemory) {
+        this.currentSystemMemory = currentSystemMemory;
+    }
 }

@@ -12,28 +12,42 @@ public class Backup {
     private int chunkNumber;
     private bytes[] body;
     private String senderId;*/
-    private Peer parentPeer;
+    private Peer peer;
     private Message msg;
 
+    /**
+     * Responsible for backing up a file
+     *
+     * @param peer : peer listening to the multicast
+     */
     public Backup(Peer peer, Message msg){
-
-        this.parentPeer = peer;
+        this.peer = peer;
         this.msg = msg;
     }
 
+    /**
+     * Creates backup protocol
+     *
+     * @param peer : peer that creates backup protocol
+     */
+    public Backup(Peer peer){
+        this.peer = peer;
+    }
+
+    //notas para o ze: verificamos o sendirId no dispacher run
     public boolean putChunk(Message msg) throws IOException {
 
-        /* Não sei se temos que verificar que o senderID aqui ou se verifcamos quando recebemos a messagem no canal */
-        /* verificar se o chunk já está stored no peer*/
         /* caso não esteja verificar se existe espaço suficiiente para guardar o ficheiro*/
         /* store do chunk no diretório */
         /* em caso de sucesso criar a mensagem STORED para enviar para o canal MC para o peer que envio o PUTCHUNK*/
 
         int chuckSize = msg.getBody().getBytes().length;
-        if(!getChunk(msg) && this.parentPeer.getAvailableStorage() >= chuckSize) {
-            // Checks if ChuckNo is already stored
-            File out = new File(this.parentPeer.FILE_STORAGE_PATH + "/" + msg.getHeader().getSenderId() + "/" + msg.getHeader().getFileId() + "/" + msg.getHeader().getChuckNo() + ".txt");
+        if(!getChunk(msg) && this.peer.getAvailableStorage() >= chuckSize) {
+            // Checks if ChuckNo is already stored on the peer
+            File out = new File(this.peer.FILE_STORAGE_PATH + "/" + msg.getHeader().getSenderId() + "/" + msg.getHeader().getFileId() + "/" + msg.getHeader().getChuckNo() + ".txt");
             if(out.exists()) return false;
+
+            // If the directory Storage/SenderId/FileId does not exist creates it
             if(!out.getParentFile().exists()) out.getParentFile().mkdirs();
 
             out.createNewFile();
@@ -42,11 +56,10 @@ public class Backup {
             writer.write(msg.getBody());
             writer.close();
 
-            this.parentPeer.setCurrentSystemMemory(this.parentPeer.getCurrentSystemMemory() + msg.getBody().length());
+            this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + msg.getBody().length());
 
             // what to do with replication degree???
             // increase replication degree and save in non volatile memory
-
 
 
 

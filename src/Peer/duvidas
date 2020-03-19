@@ -1,0 +1,11 @@
+temos que implementar threads para os canais de comunicação qual o proposito?
+Devemos ter uma classe chunkmananger que o qque faz é ter metrodos para fazer o store e divisao de ficheiros em chunks ou devemos fazer isso nos protocolos, caso thenhamos uma classe
+os protocolos devem chamar esta classe para fazer store, esta classe deve ser implementado em ?
+
+
+
+
+implements runnable vs extends thread
+fazer o channel e o dispathcer tread/runnable?
+guardar os chunks como? txt? binario?
+Hashtable vs HashMap vs ConcorrentHashMap ?? para guardar os rep degree

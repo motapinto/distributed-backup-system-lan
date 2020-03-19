@@ -9,7 +9,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 // Channel channel1 = new Channel(...); channel1.start() - delete after
-public class Channel extends Thread {
+public class Channel implements Runnable {
     protected Peer peer;
     protected int port;
     protected InetAddress address;
@@ -52,6 +52,7 @@ public class Channel extends Thread {
     public void run() {
         while (true) {
             try {
+                // Receives Datagram packet and sends it to the Dispatcher
                 Dispatcher handler = new Dispatcher(this.peer, this.receive());
                 handler.start();
             } catch (IOException e) {

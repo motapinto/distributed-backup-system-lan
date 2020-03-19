@@ -10,7 +10,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 
-public class Dispatcher implements Runnable{
+public class Dispatcher implements Runnable {
     private Peer peer;
     private Message message;
 

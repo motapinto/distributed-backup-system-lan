@@ -7,13 +7,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class Backup {
-    /* private String fileId;
+    private String fileId;
     private int replicationDeg;
     private int chunkNumber;
     private bytes[] body;
-    private String senderId;*/
+    private String senderId;
     private Peer peer;
-    private Message msg;
+
+    //private Message msg;
 
     /**
      * Responsible for backing up a file
@@ -77,6 +78,21 @@ public class Backup {
         }
 
         
+    }
+
+    public void sendChunk(byte[] chunk, int chuckNo) {
+        Header requestHeader = new Header();
+        requestHeader.setVersion(this.peer.getVersion());
+        requestHeader.setSenderId(Integer.toString(this.peer.getId()));
+        requestHeader.setFileId(this.fileId);
+        requestHeader.setChuckNo(Integer.toString(chuckNo));
+        requestHeader.setReplicationDeg(Integer.toString(this.replicationDeg));
+
+        Message request = new Message(requestHeader);
+        request.setBody(chunk);
+
+        Dispatcher dispatcher = new Dispatcher();
+        ??dispatcher.send?
     }
 
     public boolean getChunk(Message msg){

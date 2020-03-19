@@ -5,7 +5,7 @@ import static Common.Constants.*;
 
 public class Message {
     private Header header;
-    String body;
+    byte[] body;
 
     public Message(byte[] message) {
         this.header = new Header();
@@ -19,9 +19,14 @@ public class Message {
         this.parseMessage(packet.toString().getBytes());
     }
 
+    public Message(Header header) {
+        this.header = header;
+        this.body = null;
+    }
+
     private void parseMessage(byte[] bytes)  {
         String[] message = (new String(bytes)).split(CRLF + CRLF);
-        String body = message[1];
+        byte[] body = message[1].getBytes();
 
         //  matches one or many whitespaces and replaces them with one whitespace
         message[0].replaceAll("\\s+", " ");
@@ -79,7 +84,7 @@ public class Message {
         return this.header;
     }
 
-    public String getBody() {
+    public byte[] getBody() {
         return this.body;
     }
 
@@ -87,7 +92,7 @@ public class Message {
         this.header = header;
     }
 
-    public void setBody(String body) {
+    public void setBody(byte[] body) {
         this.body = body;
     }
 }

@@ -1,6 +1,7 @@
 package Peer;
 
 import Channels.*;
+import Message.Message;
 import SubProtocols.*;
 import jdk.dynalink.linker.ConversionComparator;
 
@@ -30,11 +31,11 @@ public class Peer implements PeerInterface{
     private SpaceReclaim reclaim;
 
     /**
-     * String : fileId_chuckNo   |   Integer : replication degree
+     * String : fileId_chuckNo   |   String : replication degree
      * The necessity of the ConcurrentHashMap comes from the fact that HashMap is not thread-safe, HashTable does not
      * permit concurrency when accessing data (single-lock) and ConcurrentHashMap is more efficient for threaded applications
      */
-    private ConcurrentHashMap<String, Integer> repDegreeInfo = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, String> repDegreeInfo = new ConcurrentHashMap<>();
 
     public Peer(String version, String id, String[] serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddresss) throws IOException {
         this.version = version;
@@ -58,7 +59,7 @@ public class Peer implements PeerInterface{
     }
 
     /**
-     * Reads all properties files regarding chunks replication degree
+     * Reads all properties files
      */
     private void readProperties() {
         // Get chunks replication degree info
@@ -165,8 +166,8 @@ public class Peer implements PeerInterface{
         }
     }
 
-    public void backup(){
-
+    public void backup(String pathname, int replicationDegree){
+        this.backup = new Backup()
     }
 
     public void restore(){

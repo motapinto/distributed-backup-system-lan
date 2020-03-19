@@ -38,8 +38,6 @@ public class Dispatcher implements Runnable {
 
     @Override
     public void run() {
-        if(this.message.getHeader().getSenderId().equals(this.peer.getId())) return;
-
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
                 this.peer.backup();

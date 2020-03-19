@@ -2,18 +2,24 @@ package Channels;
 
 import Common.Logs;
 import Message.Dispatcher;
+import Message.Message;
 import Peer.Peer;
+import static Common.Constants.MAX_PACKET_SIZE;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-// Channel channel1 = new Channel(...); channel1.start() - delete after
+
 public class Channel implements Runnable {
     protected Peer peer;
     protected int port;
     protected InetAddress address;
     protected MulticastSocket multicastSocket;
+    protected ScheduledExecutorService threadDispatcher;
 
     /**
      * Class responsible for the comunication with the multicast
@@ -39,7 +45,7 @@ public class Channel implements Runnable {
      * @throws IOException
      */
     public DatagramPacket receive() throws IOException {
-        byte[] buf = new byte[???];
+        byte[] buf = new byte[MAX_PACKET_SIZE];
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         this.multicastSocket.receive(packet);
         return packet;
@@ -52,9 +58,12 @@ public class Channel implements Runnable {
     public void run() {
         while (true) {
             try {
-                // Receives Datagram packet and sends it to the Dispatcher
-                Dispatcher handler = new Dispatcher(this.peer, this.receive());
-                handler.start();
+                Message messageReceived = new Message(this.receive());
+                if(!messageReceived.getHeader().getSenderId().equals(this.peer.getId())) {
+                    ScheduledThreadPoolExecutor repetitiveTask = new ScheduledThreadPoolExecutor(1);
+                    Dispatcher handler = new Dispatcher(this.peer, messageReceived);
+                    handler.start();
+                }
             } catch (IOException e) {
                 Logs.logError("Error handling peer" + e);
             }

@@ -20,6 +20,7 @@ public class Constants {
     public static final int MAX_MEMORY = 8000000; // 8MB
     public static final int PUTCHUNK_RETRIES = 5;
     public static final int MAX_CHUNK_SIZE = 64000; // 64 KB
+    public static final int MAX_PACKET_SIZE = 64500; // 64 KB
     public static final int MAX_REPLICATION_DEGREE = 9;
     public static final int MAX_NUM_CHUNKS = 1000000;
 

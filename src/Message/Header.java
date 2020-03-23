@@ -10,7 +10,7 @@ public class Header {
     private String chuckNo;
     private String replicationDeg;
 
-    public Header() { super(); }
+    public Header() { }
 
     @Override
     public String toString() {

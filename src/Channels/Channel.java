@@ -10,16 +10,12 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-
 
 public class Channel implements Runnable {
     protected Peer peer;
     protected int port;
     protected InetAddress address;
     protected MulticastSocket multicastSocket;
-    protected ScheduledExecutorService threadDispatcher;
 
     /**
      * Class responsible for the comunication with the multicast
@@ -60,14 +56,20 @@ public class Channel implements Runnable {
             try {
                 Message messageReceived = new Message(this.receive());
                 if(!messageReceived.getHeader().getSenderId().equals(this.peer.getId())) {
-                    ScheduledThreadPoolExecutor repetitiveTask = new ScheduledThreadPoolExecutor(1);
                     Dispatcher handler = new Dispatcher(this.peer, messageReceived);
-                    handler.start();
                 }
             } catch (IOException e) {
                 Logs.logError("Error handling peer" + e);
             }
         }
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public InetAddress getAddress() {
+        return address;
     }
 
     /**

@@ -14,7 +14,8 @@ public class Backup {
     private String senderId;
     private Peer peer;
 
-    //private Message msg;
+
+    private String pathName;
 
     /**
      * Responsible for backing up a file
@@ -35,12 +36,21 @@ public class Backup {
         this.peer = peer;
     }
 
-    //notas para o ze: verificamos o sendirId no dispacher run
-    public boolean putChunk(Message msg) throws IOException {
+    public Backup(Peer peer, String pathname, int replicationDeg) {
+        this.peer = peer;
+
+    }
+
+    /**
+     * Stores the chunk and sends a STORED message
+     */
+    public boolean storeChunk(Message msg) throws IOException {
 
         /* caso não esteja verificar se existe espaço suficiiente para guardar o ficheiro*/
         /* store do chunk no diretório */
         /* em caso de sucesso criar a mensagem STORED para enviar para o canal MC para o peer que envio o PUTCHUNK*/
+
+        // send storage message if enough space at beggining
 
         int chuckSize = msg.getBody().getBytes().length;
         if(!getChunk(msg) && this.peer.getAvailableStorage() >= chuckSize) {
@@ -80,7 +90,7 @@ public class Backup {
         
     }
 
-    public void sendChunk(byte[] chunk, int chuckNo) {
+    public void sendPutChunkMessage(Message message) {
         Header requestHeader = new Header();
         requestHeader.setVersion(this.peer.getVersion());
         requestHeader.setSenderId(Integer.toString(this.peer.getId()));
@@ -95,11 +105,28 @@ public class Backup {
         ??dispatcher.send?
     }
 
+    public void createPutChunkMessage(Message message)
+
+    public void createStoredChunkMessage(Message message) {
+        Header requestHeader = new Header();
+        requestHeader.setVersion(message.getHeader().getVersion());
+        requestHeader.setSenderId(Integer.toString(this.peer.getId()));
+        requestHeader.setFileId(message.getHeader().getFileId());
+        requestHeader.setChuckNo(message.getHeader().getChuckNo());
+
+        Message request = new Message(requestHeader);
+        request.setBody(chunk);
+
+        Dispatcher dispatcher = new Dispatcher();
+    }
+
     public boolean getChunk(Message msg){
 
         /*Message message = new Message();*/
 
 
     }
+
+
 
 }

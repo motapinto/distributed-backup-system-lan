@@ -55,6 +55,7 @@ public class Channel implements Runnable {
         while (true) {
             try {
                 Message messageReceived = new Message(this.receive());
+                messageReceived.setType(Message.MessageType.RECEIVER);
                 if(!messageReceived.getHeader().getSenderId().equals(this.peer.getId())) {
                     Dispatcher handler = new Dispatcher(this.peer, messageReceived);
                 }

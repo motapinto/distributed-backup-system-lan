@@ -10,6 +10,8 @@ import static Common.Constants.*;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
@@ -17,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Peer implements PeerInterface{
     public static final String FILE_STORAGE_PATH = "../../storage";
+    public static final int MAX_SIZE = 64000000;
 
     private String version;
     private int id;
@@ -45,7 +48,7 @@ public class Peer implements PeerInterface{
         this.version = version;
         this.id = Integer.parseInt(id);
         this.serviceAccessPoint = serviceAccessPoint;
-        this.currentSystemMemory = 0;
+        this.currentSystemMemory = 0; // ?
 
         this.setupFiles();
         this.readProperties();
@@ -170,47 +173,18 @@ public class Peer implements PeerInterface{
         }
     }
 
-    public void backup(String pathName, int replicationDegree){
+    public void backup(String pathName, int replicationDegree) throws IOException {
 
+        // esta verificacao deve ser feita no inicio
         if(replicationDegree > MAX_REPLICATION_DEGREE) {
             Logs.logError("Maximum replication Degree reached!");
             return;
         }
 
-        //this.backup = new Backup(this, pathname, replicationDegree);
+        String fileName = Paths.get(pathName).getFileName().toString();
+        this.backup = new Backup(this, fileName, replicationDegree);
 
-        File file = new File(pathName);
-        String fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
-
-        try {
-            ArrayList<byte[]> chunks = splitFileIntoChunks(file);
-            for (int i = 0; i< chunks.size(); i++) {
-                Header putChunkHeader = new Header();
-                putChunkHeader.setVersion(this.getVersion());
-                putChunkHeader.setMessageType(PUTCHUNK);
-                putChunkHeader.setSenderId(Integer.toString(this.id));
-                putChunkHeader.setFileId(fileId);
-                putChunkHeader.setChuckNo(Integer.toString(i));
-                putChunkHeader.setReplicationDeg(Integer.toString(replicationDegree));
-
-                Message putChunk = new Message(putChunkHeader, chunks.get(i));
-
-                this.backupChannel.sendMessage()?
-
-                Dispatcher dispatcher = new Dispatcher(this, putChunk);
-                dispatcher.sendMessage();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-
-
-        //separate file into chunks
-        this.backup.splitFileIntoChunks();
-
-        //send all the ckunks of that file
+        this.backup.splitFileIntoChunks(pathName);
     }
 
     public void restore(){
@@ -225,27 +199,8 @@ public class Peer implements PeerInterface{
 
     }
 
-    public ArrayList<byte[]> splitFileIntoChunks(File file) throws IOException {
-        InputStream inputFile = new FileInputStream(file.getAbsolutePath());
-
-        int numDivs = (int)Math.ceil(file.length() / MAX_CHUNK_SIZE);
-        if(numDivs > MAX_NUM_CHUNKS) {
-            Logs.logError("File can only have  ");
-            return null;
-        }
-
-        //ArrayList or create Chunk class to store chunks ?????????????????????
-        ArrayList<byte[]> chunks = new ArrayList<>();
-        for (int chuckNo = 0; chuckNo < numDivs; chuckNo ++) {
-            byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
-            chunks.add(chuck);
-        }
-
-        return chunks;
-    }
-
     public int getAvailableStorage() {
-        return MAX_CHUNK_SIZE -  this.currentSystemMemory;
+        return MAX_SIZE -  this.currentSystemMemory;
     }
 
     public String getVersion() {
@@ -274,6 +229,18 @@ public class Peer implements PeerInterface{
 
     public Backup getBackup() {
         return backup;
+    }
+
+    public ConcurrentHashMap<String, String> getRepDegreeInfo() {
+        return repDegreeInfo;
+    }
+
+    public void increaseRepDegreeInfo(Message message) {
+        return;
+    }
+
+    public void decreaseRepDegreeInfo(Message message) {
+
     }
 
     public int getCurrentSystemMemory() {

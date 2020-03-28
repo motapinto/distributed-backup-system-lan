@@ -2,18 +2,10 @@ package Peer;
 
 import Channels.*;
 import Common.Logs;
-import Common.Utilities;
-import Message.*;
 import SubProtocols.*;
-
 import static Common.Constants.*;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -23,9 +15,9 @@ public class Peer implements PeerInterface{
     public static final String FILE_STORAGE_PATH = "../../storage";
     public static final int MAX_SIZE = 64000000;
 
-    private String version;
-    private int id;
-    private String[] serviceAccessPoint;
+    private final String version;
+    private final int id;
+    private final String[] serviceAccessPoint;
     private int currentSystemMemory;
 
     /** Channels */
@@ -47,13 +39,18 @@ public class Peer implements PeerInterface{
     /** Sring: fileId    |    Backup: backup protocol for a file with fileId */
     private ConcurrentHashMap<String, Backup> backupProtocolMap = new ConcurrentHashMap<>();
 
-
     /**
-     * String : fileId_chuckNo   |   String : replication degree
+     * String : "fileId_chuckNo"   |   String : "repDegree_desiredRepDegree"
      * The necessity of the ConcurrentHashMap comes from the fact that HashMap is not thread-safe, HashTable does not
      * permit concurrency when accessing data (single-lock) and ConcurrentHashMap is more efficient for threaded applications
      */
     private ConcurrentHashMap<String, String> repDegreeInfo = new ConcurrentHashMap<>();
+
+    /**
+     * String : "senderId_fileId_chuckNo"   |   String : "senderId"
+     */
+    private ConcurrentHashMap<String, String> storedChunkHistory = new ConcurrentHashMap<>();
+
 
     public Peer(String version, String id, String[] serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddresss) throws IOException {
         this.version = version;
@@ -206,21 +203,60 @@ public class Peer implements PeerInterface{
         // finish all the pending tasks related with PUTCHUNK
 
 
-        this.backup.splitFileIntoChunks();
+        this.backup.startPutchunkProcedure();
 
         this.backupProtocolMap.put(backup.getFileId(), backup);
     }
 
-    public void restore(){
+    public void restore(String pathname) {}
+
+    public void delete(String pathname) {
 
     }
 
-    public void delete(){
+    public void reclaim(int maxDiskSpace) {
 
     }
 
-    public void reclaim(){
+    /** Returns desired/current replication degree for a pair (fileId, chuckNo) */
+    public int getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
+        String id = fileId + "_" + chunkNo;
 
+        int index;
+        if(getCurrent) index = 0;
+        else index = 1;
+
+        if(this.repDegreeInfo.get(id) != null) {
+            return Integer.parseInt(this.repDegreeInfo.get(id).split("_")[index]);
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     * This function increments the replication degree of the chunk with id = fileId + "_" + chunkNo
+     * only if this is the first time that the sender of a message as sent the STORED message
+     *
+     * @param senderId : sender id
+     * @param fileId   : file id
+     * @param chunkNo  : number of the chunk
+     */
+    public void incrementRepDegreeInfo(String senderId, String fileId, String chunkNo) {
+        String id = fileId + "_" + chunkNo;
+        if(this.storedChunkHistory.get(senderId + "_" + id) == null) {
+            this.storedChunkHistory.put(senderId + "_" + id, senderId);
+
+            if(this.repDegreeInfo.get(id) != null) {
+                int currentRepDegree = getRepDegreeInfo(fileId, chunkNo, true) + 1;
+                int desiredRepDegree = getRepDegreeInfo(fileId, chunkNo, false);
+                this.repDegreeInfo.put(id, currentRepDegree + "_" + desiredRepDegree);
+            }
+        }
+    }
+
+    public void setRepDegreeInfo(String fileId, String chunkNo, int desiredRepDegree) {
+        String id = fileId + "_" + chunkNo;
+        this.repDegreeInfo.put(id, "1_" + desiredRepDegree);
     }
 
     public int getAvailableStorage() {
@@ -257,14 +293,6 @@ public class Peer implements PeerInterface{
 
     public ConcurrentHashMap<String, String> getRepDegreeInfo() {
         return repDegreeInfo;
-    }
-
-    public void increaseRepDegreeInfo(Message message) {
-        return;
-    }
-
-    public void decreaseRepDegreeInfo(Message message) {
-
     }
 
     public int getCurrentSystemMemory() {

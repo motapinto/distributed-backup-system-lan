@@ -7,6 +7,7 @@ import static Common.Constants.*;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 public class Dispatcher implements Runnable{
     private Peer peer;
@@ -17,8 +18,7 @@ public class Dispatcher implements Runnable{
 
     enum MessageType{
         SENDER,
-        RECEIVER,
-        DELIVER
+        RECEIVER
     }
 
     /**
@@ -40,73 +40,31 @@ public class Dispatcher implements Runnable{
      *
      * @param peer : peer that receives packet
      * @param message : packet received from the channel
+     * @param channel : packet received from the channel
      */
-    public Dispatcher(Peer peer, Message message) {
+    public Dispatcher(Peer peer, Message message, Channel channel) {
         this.peer = peer;
         this.message = message;
         this.type = MessageType.SENDER;
+        this.address = channel.getAddress();
+        this.port = channel.getPort();
     }
-
-    /**
-     * Receives a Message to be handled and dispatched
-     * Role - Deliver
-     *
-     * @param peer : peer that receives packet
-     * @param message : packet received from the channel
-     */
-    public Dispatcher(Peer peer, Message message, String address, int port) {
-        this.peer = peer;
-        this.message = message;
-        this.type = MessageType.DELIVER;
-        this.address = address;
-        this.port = port;
-
-    }
-
 
     @Override
     public void run() {
         switch (this.type) {
-
-            case MessageType.RECEIVER:
+            case RECEIVER:
                 this.receiveMessage();
                 break;
 
-            case MessageType.SENDER:
-                this.sendMessage();
-                break;
-
-            case MessageType.DELIVER:
-                this.deliverMessage();
+            case SENDER:
+                this.sendMessageToChannel(this.message);
                 break;
 
             default:
                 break;
         }
     }
-
-    /**
-     * Function responsible to sending messages
-     */
-    public void sendMessage() {
-        switch (message.getHeader().getMessageType()) {
-            case PUTCHUNK:
-                peer.getBackup().sendPutChunkMessage(message);
-                break;
-            case STORED:
-                peer.getBackup().sendStoredMessage(message);
-                break;
-            case GETCHUNK:
-                break;
-            case DELETE:
-                break;
-            case REMOVED:
-                break;
-            default:
-                break;
-        }
-
-}
 
     /**
      * Function responsible to receiving requests and does the handling
@@ -114,8 +72,10 @@ public class Dispatcher implements Runnable{
     public void receiveMessage() {
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
-                this.peer.getBackup().storeChunk(message);
+                this.peer.getBackup().startStoredProcedure(message);
                 break;
+            case STORED:
+                this.peer.incrementRepDegreeInfo(this.message.getHeader().getFileId(), this.message.getHeader().getChuckNo());
             case GETCHUNK:
                 break;
             case DELETE:
@@ -125,21 +85,19 @@ public class Dispatcher implements Runnable{
         }
     }
 
-
     /**
      * Delivers a message to a channel
      *
      * @param message : message to be sent
-     * @param channel : channel that will receive the message
      */
-    public void sendMessageToChannel(Message message, Channel channel) {
+    public void sendMessageToChannel(Message message) {
         DatagramPacket packet;
         DatagramSocket socket;
 
         try {
             socket = new DatagramSocket();
             byte[] buf = message.toBytes();
-            packet = new DatagramPacket(buf, buf.length, channel.getAddress(), channel.getPort());
+            packet = new DatagramPacket(buf, buf.length, InetAddress.getByName(this.address), this.port);
             socket.send(packet);
         } catch (IOException e) {
             e.printStackTrace();

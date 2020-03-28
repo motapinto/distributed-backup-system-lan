@@ -7,8 +7,8 @@ public interface PeerInterface  {
     /**
      * Function used by the user to back-up a determined file
      *
-     * @param pathname          name of the file to backup - should be in the peer's files directories
-     * @param replicationDegree desired replication degree for the file
+     * @param pathname          : name of the file to backup - should be in the peer's files directories
+     * @param replicationDegree : desired replication degree for the file
      * @throws IOException
      */
     void backup(String pathname, int replicationDegree) throws IOException;

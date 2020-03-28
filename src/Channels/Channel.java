@@ -14,6 +14,7 @@ import java.net.MulticastSocket;
 public class Channel implements Runnable {
     protected Peer peer;
     protected int port;
+    protected String address;
 
     protected MulticastSocket multicastSocket;
 
@@ -65,13 +66,21 @@ public class Channel implements Runnable {
     }
 
     /**
-     * Gets peer connected to the channel
-     *
-     * @return Peer peer : peer connected to the chanel
+     * Returns the peer connected to the channel
      */
     public Peer getPeer() {
         return this.peer;
     }
+
+    /**
+     * Returns the channel port
+     */
+    public int getPort() { return port; }
+
+    /**
+     * Returns the channel address
+     */
+    public String getAddress() { return address; }
 
     /**
      * Closes the multicast socket

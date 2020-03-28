@@ -64,7 +64,6 @@ public class Peer implements PeerInterface{
         this.setupExecutors();
         this.createProtocols();
         this.saveProperties();
-
     }
 
     /**
@@ -325,5 +324,16 @@ public class Peer implements PeerInterface{
 
     public void setReceiverExecutor(ExecutorService receiverExecutor) {
         this.receiverExecutor = receiverExecutor;
+    }
+
+    public static void main(String[] args) throws IOException {
+        String[] serviceAccessPoint = {"sda", "sad"};
+        String[] mcAddress = {"localhost", "45"};
+        String[] mdbAddress = {"localhost", "46"};
+        String[] mdrAddress = {"localhost", "48"};
+        Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+        Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+
+        peer1.backup("C:\\Users\\Martim\\Desktop\\feup-LBAW\\Theory\\01-intro.pdf", 1);
     }
 }

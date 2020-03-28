@@ -1,5 +1,11 @@
 temos que implementar threads para os canais de comunicação qual o proposito?
-o channel precisa de extender a class thread e ter um metodo dentr chamdo run que tem um ciclo while sempre aà espera de receber mensagens e
 Devemos ter uma classe chunkmananger que o qque faz é ter metrodos para fazer o store e divisao de ficheiros em chunks ou devemos fazer isso nos protocolos, caso thenhamos uma classe
 os protocolos devem chamar esta classe para fazer store, esta classe deve ser implementado em ?
-Como é que vamos guardar os chunks como ficheiros de txt?
+
+
+
+
+implements runnable vs extends thread
+fazer o channel e o dispathcer tread/runnable?
+guardar os chunks como? txt? binario?
+Hashtable vs HashMap vs ConcorrentHashMap ?? para guardar os rep degree

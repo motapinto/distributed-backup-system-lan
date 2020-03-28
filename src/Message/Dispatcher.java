@@ -11,6 +11,15 @@ import java.net.DatagramSocket;
 public class Dispatcher implements Runnable{
     private Peer peer;
     private Message message;
+    private MessageType type;
+    private String address;
+    private int port;
+
+    enum MessageType{
+        SENDER,
+        RECEIVER,
+        DELIVER
+    }
 
     /**
      * Receives a DatagramPacket from the a Channel to be handled and dispatched
@@ -22,7 +31,7 @@ public class Dispatcher implements Runnable{
     public Dispatcher(Peer peer, DatagramPacket packet) {
         this.peer = peer;
         this.message = new Message(packet);
-        this.message.setType(Message.MessageType.RECEIVER);
+        this.type = MessageType.RECEIVER;
     }
 
     /**
@@ -35,18 +44,40 @@ public class Dispatcher implements Runnable{
     public Dispatcher(Peer peer, Message message) {
         this.peer = peer;
         this.message = message;
-        this.message.setType(Message.MessageType.SENDER);
+        this.type = MessageType.SENDER;
     }
+
+    /**
+     * Receives a Message to be handled and dispatched
+     * Role - Deliver
+     *
+     * @param peer : peer that receives packet
+     * @param message : packet received from the channel
+     */
+    public Dispatcher(Peer peer, Message message, String address, int port) {
+        this.peer = peer;
+        this.message = message;
+        this.type = MessageType.DELIVER;
+        this.address = address;
+        this.port = port;
+
+    }
+
 
     @Override
     public void run() {
-        switch (this.message.getType()) {
-            case RECEIVER:
+        switch (this.type) {
+
+            case MessageType.RECEIVER:
                 this.receiveMessage();
                 break;
 
-            case SENDER:
+            case MessageType.SENDER:
                 this.sendMessage();
+                break;
+
+            case MessageType.DELIVER:
+                this.deliverMessage();
                 break;
 
             default:

@@ -14,7 +14,7 @@ import java.net.MulticastSocket;
 public class Channel implements Runnable {
     protected Peer peer;
     protected int port;
-    protected InetAddress address;
+
     protected MulticastSocket multicastSocket;
 
     /**
@@ -27,11 +27,11 @@ public class Channel implements Runnable {
      */
     Channel(Peer peer, String address, int port) throws IOException {
         this.peer = peer;
-        this.address = InetAddress.getByName(address);
+        InetAddress ipAddress = InetAddress.getByName(address);
         this.port = port;
         this.multicastSocket = new MulticastSocket(this.port);
         this.multicastSocket.setTimeToLive(1);
-        this.multicastSocket.joinGroup(this.address);
+        this.multicastSocket.joinGroup(ipAddress);
     }
 
     /**
@@ -54,23 +54,14 @@ public class Channel implements Runnable {
     public void run() {
         while (true) {
             try {
-                Message messageReceived = new Message(this.receive());
-                messageReceived.setType(Message.MessageType.RECEIVER);
-                if(!messageReceived.getHeader().getSenderId().equals(this.peer.getId())) {
-                    Dispatcher handler = new Dispatcher(this.peer, messageReceived);
-                }
+                DatagramPacket received = this.receive();
+
+                Dispatcher handler = new Dispatcher(this.peer, received);
+
             } catch (IOException e) {
                 Logs.logError("Error handling peer" + e);
             }
         }
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public InetAddress getAddress() {
-        return address;
     }
 
     /**

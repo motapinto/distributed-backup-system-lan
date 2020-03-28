@@ -5,12 +5,17 @@ import Common.Utilities;
 import Peer.Peer;
 import Message.*;
 import java.io.*;
+import java.nio.file.Paths;
 
 import static Common.Constants.*;
 
 public class Backup {
     private Peer peer;
     private int desiredRepDeg;
+    private String pathName;
+    private String fileName;
+    private int lastChunkNo;
+    private String fileId;
 
     /**
      * Responsible for backing up a file
@@ -18,9 +23,12 @@ public class Backup {
      * @param peer : peer listening to the multicast
      * @param desiredRepDeg : desired replication degree of the file
      */
-    public Backup(Peer peer, int desiredRepDeg){
+    public Backup(Peer peer, String pathName, int desiredRepDeg){
         this.peer = peer;
         this.desiredRepDeg = desiredRepDeg;
+        this.pathName = pathName;
+        this.fileName = Paths.get(pathName).getFileName().toString();
+        this.lastChunkNo = 0;
     }
 
     /**
@@ -30,6 +38,9 @@ public class Backup {
      */
     public Backup(Peer peer){
         this.peer = peer;
+        this.pathName = null;
+        this.fileName = null;
+        this.lastChunkNo = 0;
     }
 
 
@@ -88,24 +99,27 @@ public class Backup {
 
     /**
      * Splits a file into chunks
-     * @param pathName : path name of the file to split into chunks
      */
-    public void splitFileIntoChunks(String pathName) throws IOException {
-        File file = new File(pathName);
-        String fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
+    public void splitFileIntoChunks() throws IOException {
+
+        File file = new File(this.pathName);
+        this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
 
         InputStream inputFile = new FileInputStream(file.getAbsolutePath());
 
-        int numDivs = (int)Math.ceil(file.length() / MAX_CHUNK_SIZE);
-        if(numDivs > MAX_NUM_CHUNKS) {
+        int numNecessaryChunks = (int)Math.ceil(file.length() / MAX_CHUNK_SIZE);
+        if(numNecessaryChunks > MAX_NUM_CHUNKS) {
             Logs.logError("File can only have  ");
             return;
         }
 
-        for (int chuckNo = 0; chuckNo < numDivs; chuckNo ++) {
+        for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
             byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
             sendPutChunkMessage(chuck, chuckNo, fileId);
+            this.lastChunkNo++;
         }
+
+        inputFile.close();
     }
 
     /**
@@ -114,17 +128,15 @@ public class Backup {
      * @param chunkNo : number of the received chunk
      */
     public void sendPutChunkMessage(byte[] chunk, int chunkNo, String fileId) {
-        Header requestHeader = new Header();
-        requestHeader.setVersion(this.peer.getVersion());
-        requestHeader.setSenderId(Integer.toString(this.peer.getId()));
-        requestHeader.setFileId(fileId);
-        requestHeader.setChuckNo(Integer.toString(chunkNo));
-        requestHeader.setReplicationDeg(Integer.toString(this.desiredRepDeg));
 
-        Message request = new Message(requestHeader);
+        Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()), fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg));
         request.setBody(chunk);
 
         Dispatcher dispatcher = new Dispatcher(this.peer, request);
-        dispatcher.run();
+        this.peer.getSenderExecutor().submit(dispatcher);
+    }
+
+    public String getFileId() {
+        return fileId;
     }
 }

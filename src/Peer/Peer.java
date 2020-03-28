@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Peer implements PeerInterface{
     public static final String FILE_STORAGE_PATH = "../../storage";
@@ -37,6 +39,15 @@ public class Peer implements PeerInterface{
     private Restore restore;
     private SpaceReclaim reclaim;
 
+    /** Executors */
+    private ExecutorService senderExecutor;
+    private ExecutorService deliverExecutor;
+    private ExecutorService receiverExecutor;
+
+    /** Sring: fileId    |    Backup: backup protocol for a file with fileId */
+    private ConcurrentHashMap<String, Backup> backupProtocolMap = new ConcurrentHashMap<>();
+
+
     /**
      * String : fileId_chuckNo   |   String : replication degree
      * The necessity of the ConcurrentHashMap comes from the fact that HashMap is not thread-safe, HashTable does not
@@ -53,8 +64,10 @@ public class Peer implements PeerInterface{
         this.setupFiles();
         this.readProperties();
         this.setupChannels(mcAddress, mdbAddress, mdrAddresss);
+        this.setupExecutors();
         this.createProtocols();
         this.saveProperties();
+
     }
 
     /**
@@ -87,6 +100,13 @@ public class Peer implements PeerInterface{
 
             this.currentSystemMemory = Integer.parseInt(diskProperties.getProperty("used"));
         }
+    }
+
+
+    private void setupExecutors(){
+        this.senderExecutor = Executors.newFixedThreadPool(5);
+        this.deliverExecutor = Executors.newFixedThreadPool(11);
+        this.receiverExecutor = Executors.newFixedThreadPool(10);
     }
 
     /**
@@ -175,16 +195,20 @@ public class Peer implements PeerInterface{
 
     public void backup(String pathName, int replicationDegree) throws IOException {
 
-        // esta verificacao deve ser feita no inicio
+
         if(replicationDegree > MAX_REPLICATION_DEGREE) {
             Logs.logError("Maximum replication Degree reached!");
             return;
         }
 
-        String fileName = Paths.get(pathName).getFileName().toString();
-        this.backup = new Backup(this, fileName, replicationDegree);
+        this.backup = new Backup(this, pathName, replicationDegree);
 
-        this.backup.splitFileIntoChunks(pathName);
+        // finish all the pending tasks related with PUTCHUNK
+
+
+        this.backup.splitFileIntoChunks();
+
+        this.backupProtocolMap.put(backup.getFileId(), backup);
     }
 
     public void restore(){
@@ -249,5 +273,29 @@ public class Peer implements PeerInterface{
 
     public void setCurrentSystemMemory(int currentSystemMemory) {
         this.currentSystemMemory = currentSystemMemory;
+    }
+
+    public ExecutorService getSenderExecutor() {
+        return senderExecutor;
+    }
+
+    public void setSenderExecutor(ExecutorService senderExecutor) {
+        this.senderExecutor = senderExecutor;
+    }
+
+    public ExecutorService getDeliverExecutor() {
+        return deliverExecutor;
+    }
+
+    public void setDeliverExecutor(ExecutorService deliverExecutor) {
+        this.deliverExecutor = deliverExecutor;
+    }
+
+    public ExecutorService getReceiverExecutor() {
+        return receiverExecutor;
+    }
+
+    public void setReceiverExecutor(ExecutorService receiverExecutor) {
+        this.receiverExecutor = receiverExecutor;
     }
 }

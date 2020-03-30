@@ -94,6 +94,8 @@ public class Dispatcher implements Runnable{
         DatagramPacket packet;
         DatagramSocket socket;
 
+
+        System.out.println("Sending message to channel with port "+ this.port);
         System.out.println(message.getHeader().toString());
         StringBuilder builder = new StringBuilder();
 
@@ -101,7 +103,7 @@ public class Dispatcher implements Runnable{
             builder.append(String.format("%02X", byteC));
         }
         System.out.println(builder.toString());
-        System.out.println("Sending message to chaneel with port "+ this.port);
+
 
         try {
             socket = new DatagramSocket();

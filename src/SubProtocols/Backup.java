@@ -109,10 +109,17 @@ public class Backup {
             return;
         }
 
-        for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
+        /*for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
+            byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
+            this.sendPutChunkMessage(chuck, chuckNo, fileId);
+        }*/
+
+        // TESTING
+        for (int chuckNo = 0; chuckNo < 1; chuckNo++) {
             byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
             this.sendPutChunkMessage(chuck, chuckNo, fileId);
         }
+
 
         inputFile.close();
     }
@@ -133,7 +140,10 @@ public class Backup {
         int tries = 1;
         int sleepTime = 1000;
 
-        while (repDeg < this.desiredRepDeg && tries <= 5) {
+       // while (repDeg < this.desiredRepDeg && tries <= 5) {
+
+        // TESTING
+        while(repDeg < this.desiredRepDeg){
             repDeg = this.peer.getRepDegreeInfo(Integer.toString(this.peer.getId()), Integer.toString(chunkNo), true);
 
             if(repDeg < this.desiredRepDeg) {

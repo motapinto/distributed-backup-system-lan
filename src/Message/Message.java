@@ -93,16 +93,16 @@ public class Message {
         switch(header[1]) {
             case PUTCHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5]);
-                body = new byte[bytes.length - this.header.toString().length() - 4];
+                this.body = new byte[bytes.length - this.header.toString().length() - 4];
 
                 try {
-                    bodyInputStream.read(body);
+                    bodyInputStream.read(this.body);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
                 StringBuilder builder = new StringBuilder();
-                for(byte byteC :body){
+                for(byte byteC :this.body){
                     builder.append(String.format("%02X", byteC));
                 }
                 System.out.println(builder.toString());
@@ -110,10 +110,10 @@ public class Message {
 
             case CHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4]);
-                body = new byte[bytes.length - this.header.toString().length() - 4];
+                this.body = new byte[bytes.length - this.header.toString().length() - 4];
 
                 try {
-                    bodyInputStream.read(body);
+                    bodyInputStream.read(this.body);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

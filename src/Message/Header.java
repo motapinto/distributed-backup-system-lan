@@ -1,14 +1,11 @@
 package Message;
 
-import static Common.Constants.CRLF;
-
 public class Header {
     private String chunkNo;
     private final String version;
     private final String messageType;
     private final String senderId;
     private final String fileId;
-
     private String replicationDeg;
 
     /**

@@ -2,6 +2,7 @@ package Channels;
 
 import Common.Logs;
 import Message.Dispatcher;
+import Message.Message;
 import Peer.Peer;
 import static Common.Constants.MAX_PACKET_SIZE;
 
@@ -9,11 +10,13 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.sql.SQLOutput;
 
 public class Channel implements Runnable {
     protected Peer peer;
     protected int port;
     protected String address;
+
     protected MulticastSocket multicastSocket;
 
     /**
@@ -31,7 +34,8 @@ public class Channel implements Runnable {
         this.multicastSocket = new MulticastSocket(this.port);
         this.multicastSocket.setTimeToLive(1);
 
-        this.multicastSocket.joinGroup(InetAddress.getByName(address));
+        InetAddress ipAddress = InetAddress.getByName(address);
+        this.multicastSocket.joinGroup(ipAddress);
     }
 
     /**
@@ -56,7 +60,8 @@ public class Channel implements Runnable {
             try {
                 DatagramPacket received = this.receive();
                 Dispatcher handler = new Dispatcher(this.peer, received);
-                this.peer.getReceiverExecutor().submit(handler);
+                peer.getReceiverExecutor().submit(handler);
+
             } catch (IOException e) {
                 Logs.logError("Error handling peer" + e);
             }
@@ -73,10 +78,17 @@ public class Channel implements Runnable {
     /**
      * Returns the channel port
      */
-    public int getPort() { return this.port; }
+    public int getPort() { return port; }
 
     /**
      * Returns the channel address
      */
-    public String getAddress() { return this.address; }
+    public String getAddress() { return address; }
+
+    /**
+     * Closes the multicast socket
+     */
+    public void closeSocket() {
+        this.multicastSocket.close();
+    }
 }

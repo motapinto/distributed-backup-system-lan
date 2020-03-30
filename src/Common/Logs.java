@@ -17,16 +17,19 @@ public class Logs {
     }
 
     synchronized public static void logError(String msg) {
+
         logFile.println("ERR  @ " + getStandardHeader() + msg);
         logFile.flush();
     }
 
     synchronized public static void logWarning(String msg) {
+
         logFile.println("WARN @ " + getStandardHeader() + msg);
         logFile.flush();
     }
 
     synchronized public static void log(String msg) {
+
         logFile.println("LOG  @ " + getStandardHeader() + msg);
         logFile.flush();
     }

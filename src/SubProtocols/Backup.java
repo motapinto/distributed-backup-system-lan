@@ -51,7 +51,6 @@ public class Backup {
                 message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
 
         File out = new File(pathName);
-
         // If the chunk is already stored then it does not make anything else
         if(out.exists()) return;
 
@@ -72,8 +71,10 @@ public class Backup {
         // Updates current system memory of the peer
         this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
 
-        // Updates replication degree of the chunk
-        this.peer.setRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), Integer.parseInt(message.getHeader().getReplicationDeg()));
+        // Updates replication degree of the chunk - DOES NOT WORK
+        System.out.println("PEER2: before setRepDegreeInfo");
+        this.peer.setRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), 1, Integer.parseInt(message.getHeader().getReplicationDeg()));
+        System.out.println("PEER2: after setRepDegreeInfo");
     }
 
     /**
@@ -110,8 +111,9 @@ public class Backup {
         }
 
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
-            byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
-            this.sendPutChunkMessage(chuck, chuckNo, fileId);
+            byte[] chunk = inputFile.readNBytes(MAX_CHUNK_SIZE);
+            this.peer.setRepDegreeInfo(this.fileId, Integer.toString(chuckNo), this.desiredRepDeg, 0);
+            this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
         }
 
         inputFile.close();
@@ -133,12 +135,12 @@ public class Backup {
         int tries = 1;
         int sleepTime = 1000;
 
-       // while (repDeg < this.desiredRepDeg && tries <= 5) {
+        // while (repDeg < this.desiredRepDeg && tries <= 5) {
 
         // TESTING
         while(repDeg < this.desiredRepDeg){
-            repDeg = this.peer.getRepDegreeInfo(Integer.toString(this.peer.getId()), Integer.toString(chunkNo), true);
 
+            repDeg = this.peer.getRepDegreeInfo(Integer.toString(this.peer.getId()), Integer.toString(chunkNo), true);
             if(repDeg < this.desiredRepDeg) {
                 this.peer.getSenderExecutor().submit(dispatcher);
             }

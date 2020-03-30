@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.sql.SQLOutput;
 
 public class Channel implements Runnable {
     protected Peer peer;
@@ -28,10 +29,12 @@ public class Channel implements Runnable {
      */
     Channel(Peer peer, String address, int port) throws IOException {
         this.peer = peer;
-        InetAddress ipAddress = InetAddress.getByName(address);
+        this.address = address;
         this.port = port;
         this.multicastSocket = new MulticastSocket(this.port);
         this.multicastSocket.setTimeToLive(1);
+
+        InetAddress ipAddress = InetAddress.getByName(address);
         this.multicastSocket.joinGroup(ipAddress);
     }
 

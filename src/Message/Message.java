@@ -60,7 +60,6 @@ public class Message {
      * @param packet : DatagramPacket containing message
      */
     public Message(DatagramPacket packet) {
-
         this.parseMessage(packet.getData());
     }
 
@@ -79,12 +78,8 @@ public class Message {
      * @param bytes : array of bytes
      */
     private void parseMessage(byte[] bytes)  {
-
         String[] message = (new String(bytes)).split(CRLF + CRLF);
-
-        ByteArrayInputStream bodyInputStream = new ByteArrayInputStream(bytes);
-        bodyInputStream.skip(message[0].length() + 4);
-        byte[] body;
+        int headerSize = message[0].length();
 
         //  matches one or many whitespaces and replaces them with one whitespace
         message[0].replaceAll("\\s+", " ");
@@ -93,10 +88,13 @@ public class Message {
         switch(header[1]) {
             case PUTCHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5]);
+
                 this.body = new byte[bytes.length - this.header.toString().length() - 4];
+                ByteArrayInputStream bodyPutchunkStream = new ByteArrayInputStream(bytes);
+                bodyPutchunkStream.skip(headerSize + 4);
 
                 try {
-                    bodyInputStream.read(this.body);
+                    bodyPutchunkStream.read(this.body);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -105,10 +103,13 @@ public class Message {
 
             case CHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4]);
+
                 this.body = new byte[bytes.length - this.header.toString().length() - 4];
+                ByteArrayInputStream bodyChunkStream = new ByteArrayInputStream(bytes);
+                bodyChunkStream.skip(headerSize + 4);
 
                 try {
-                    bodyInputStream.read(this.body);
+                    bodyChunkStream.read(this.body);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -139,34 +140,32 @@ public class Message {
     public String printBodyHex(){
         if(this.body != null) {
             StringBuilder builder = new StringBuilder();
-            for (byte byteC : this.body) {
+            for (byte byteC : this.body)
                 builder.append(String.format("%02X", byteC));
-            }
+
             return builder.toString();
         }
         return null;
     }
 
     public byte[] toBytes() {
-
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         try {
             outputStream.write(this.header.toString().getBytes());
-            if(this.body != null)
 
-                outputStream.write(' ');
-                outputStream.write(CR);
-                outputStream.write(LF);
-                outputStream.write(CR);
-                outputStream.write(LF);
-                outputStream.write(this.body);
+            outputStream.write(' ');
+            outputStream.write(CR);
+            outputStream.write(LF);
+            outputStream.write(CR);
+            outputStream.write(LF);
+
+            if(this.body != null)  outputStream.write(this.body);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return outputStream.toByteArray();
-
     }
 
     public Header getHeader() {
@@ -181,5 +180,3 @@ public class Message {
         this.body = body;
     }
 }
-
-

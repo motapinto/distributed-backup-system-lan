@@ -152,13 +152,16 @@ public class Message {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         try {
             outputStream.write(this.header.toString().getBytes());
+
+            outputStream.write(' ');
+            outputStream.write(CR);
+            outputStream.write(LF);
+            outputStream.write(CR);
+            outputStream.write(LF);
+
             if(this.body != null)
 
-                outputStream.write(' ');
-                outputStream.write(CR);
-                outputStream.write(LF);
-                outputStream.write(CR);
-                outputStream.write(LF);
+
                 outputStream.write(this.body);
 
         } catch (IOException e) {

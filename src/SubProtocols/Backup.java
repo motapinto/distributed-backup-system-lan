@@ -73,7 +73,7 @@ public class Backup {
         this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
 
         // Updates replication degree of the chunk
-        this.peer.setRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), Integer.parseInt(message.getHeader().getReplicationDeg()));
+        this.peer.setRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), Integer.parseInt(message.getHeader().getReplicationDeg()), 1);
     }
 
     /**
@@ -110,8 +110,10 @@ public class Backup {
         }
 
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
-            byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
-            this.sendPutChunkMessage(chuck, chuckNo, fileId);
+            byte[] chunk = inputFile.readNBytes(MAX_CHUNK_SIZE);
+            this.peer.setRepDegreeInfo(this.fileId, Integer.toString(chuckNo), this.desiredRepDeg, 0);
+            this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
+            System.out.println("chuckNo " + chuckNo);
         }
 
         inputFile.close();
@@ -137,8 +139,9 @@ public class Backup {
 
         // TESTING
         while(repDeg < this.desiredRepDeg){
-            repDeg = this.peer.getRepDegreeInfo(Integer.toString(this.peer.getId()), Integer.toString(chunkNo), true);
 
+            repDeg = this.peer.getRepDegreeInfo(Integer.toString(this.peer.getId()), Integer.toString(chunkNo), true);
+            System.out.println("Rep degree :" +  repDeg);
             if(repDeg < this.desiredRepDeg) {
                 this.peer.getSenderExecutor().submit(dispatcher);
             }

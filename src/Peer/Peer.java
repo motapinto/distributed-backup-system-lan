@@ -12,13 +12,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Peer implements PeerInterface{
-    public static final String FILE_STORAGE_PATH = "./storage";
-    public static final int MAX_SIZE = 64000000;
+
 
     private final String version;
-    private final int id;
+    private int id;
     private final String[] serviceAccessPoint;
     private int currentSystemMemory;
+
+    public static final String FILE_STORAGE_PATH = "./storage";
+    public static final int MAX_SIZE = 64000000;
+    public String REPLICATION_DEGREE_INFO_PATH = FILE_STORAGE_PATH + "/" + "1" + "/replicationDegreeInfo.properties";
+    public String DISK_INFO_PATH = FILE_STORAGE_PATH + "/1" + "/diskInfo.properties";
+    public String STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/1" + "/storedChunkHistory.properties";
 
     /** Channels */
     private Channel controlChannel;
@@ -80,17 +85,16 @@ public class Peer implements PeerInterface{
      */
     private void readProperties() {
         // Get chunks replication degree info
-        String repDegPath = FILE_STORAGE_PATH + "/" + this.id + "/replicationDegreeInfo.properties";
-        readMap(repDegPath, this.repDegreeInfo);
+
+        readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
 
         // Get disk space info
-        String diskPath = FILE_STORAGE_PATH + "/" + this.id + "/diskInfo.properties";
-        File diskInfo = new File(diskPath);
+        File diskInfo = new File(DISK_INFO_PATH);
 
         if (diskInfo.exists()) {
             Properties diskProperties = new Properties();
             try {
-                diskProperties.load(new FileInputStream(diskPath));
+                diskProperties.load(new FileInputStream(DISK_INFO_PATH));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -175,14 +179,14 @@ public class Peer implements PeerInterface{
         saveMap(repDegPath, this.repDegreeInfo);
 
         // Save disk space info
-        String diskPath = FILE_STORAGE_PATH + "/" + this.id + "/diskInfo.properties";
-        File diskInfo = new File(diskPath);
+        String DISK_INFO_PATH = FILE_STORAGE_PATH + "/" + this.id + "/diskInfo.properties";
+        File diskInfo = new File(DISK_INFO_PATH);
 
         try {
             if(!diskInfo.exists()) diskInfo.createNewFile();
             Properties diskProperties = new Properties();
             diskProperties.setProperty("used", Integer.toString(this.currentSystemMemory));
-            diskProperties.store(new FileOutputStream(diskPath), null);
+            diskProperties.store(new FileOutputStream(DISK_INFO_PATH), null);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -223,7 +227,7 @@ public class Peer implements PeerInterface{
         int index;
         if(getCurrent) index = 0;
         else index = 1;
-
+        System.out.println(this.repDegreeInfo.get(id));
         if(this.repDegreeInfo.get(id) != null) {
             return Integer.parseInt(this.repDegreeInfo.get(id).split("_")[index]);
         } else {
@@ -244,18 +248,21 @@ public class Peer implements PeerInterface{
         String id = fileId + "_" + chunkNo;
         if(this.storedChunkHistory.get(senderId + "_" + id) == null) {
             this.storedChunkHistory.put(senderId + "_" + id, senderId);
+            this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
 
             if(this.repDegreeInfo.get(id) != null) {
                 int currentRepDegree = getRepDegreeInfo(fileId, chunkNo, true) + 1;
                 int desiredRepDegree = getRepDegreeInfo(fileId, chunkNo, false);
-                this.repDegreeInfo.put(id, currentRepDegree + "_" + desiredRepDegree);
+                this.setRepDegreeInfo(fileId, chunkNo, desiredRepDegree, currentRepDegree);
             }
         }
     }
 
-    public void setRepDegreeInfo(String fileId, String chunkNo, int desiredRepDegree) {
+    public void setRepDegreeInfo(String fileId, String chunkNo, int desiredRepDegree, int value) {
         String id = fileId + "_" + chunkNo;
-        this.repDegreeInfo.put(id, "1_" + desiredRepDegree);
+        this.repDegreeInfo.put(id, value + "_" + desiredRepDegree);
+        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+        System.out.println(this.repDegreeInfo.get(id));
     }
 
     public int getAvailableStorage() {

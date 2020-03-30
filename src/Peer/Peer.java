@@ -240,6 +240,7 @@ public class Peer implements PeerInterface{
      * @param chunkNo  : number of the chunk
      */
     public void incrementRepDegreeInfo(String senderId, String fileId, String chunkNo) {
+        System.out.println("INCREMENT REP DEG");
         String id = fileId + "_" + chunkNo;
         if(this.storedChunkHistory.get(senderId + "_" + id) == null) {
             this.storedChunkHistory.put(senderId + "_" + id, senderId);
@@ -328,9 +329,15 @@ public class Peer implements PeerInterface{
     public static void main(String[] args) throws IOException {
         String[] serviceAccessPoint = {"sda", "sad"};
         String[] mcAddress = {"224.0.0.0", "4445"};
-        String[] mdbAddress = {"224.0.0.0", "4446"};
-        String[] mdrAddress = {"224.0.0.0", "4447"};
-        Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-        peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt" ,1);
+        String[] mdbAddress = {"224.0.0.1", "4446"};
+        String[] mdrAddress = {"224.0.0.2", "4447"};
+
+        if(args[0].equals("1")) {
+            Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt" ,1);
+        }
+        else {
+            Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+        }
     }
 }

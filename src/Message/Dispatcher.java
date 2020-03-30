@@ -70,6 +70,7 @@ public class Dispatcher implements Runnable{
      * Function responsible to receiving requests and does the handling
      */
     public void receiveMessage() {
+        if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
                 this.peer.getBackup().startStoredProcedure(message);
@@ -94,16 +95,9 @@ public class Dispatcher implements Runnable{
         DatagramPacket packet;
         DatagramSocket socket;
 
-
-        System.out.println("Sending message to channel with port "+ this.port);
-        System.out.println(message.getHeader().toString());
-        StringBuilder builder = new StringBuilder();
-
-        for(byte byteC : message.getBody()){
-            builder.append(String.format("%02X", byteC));
-        }
-        System.out.println(builder.toString());
-
+        System.out.println(this.message.getHeader().getMessageType() + " from:" + this.message.getHeader().getSenderId());
+        System.out.println("Address: " + this.address);
+        System.out.println("Port: " + this.port);
 
         try {
             socket = new DatagramSocket();

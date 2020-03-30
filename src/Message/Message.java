@@ -22,8 +22,9 @@ public class Message {
      * @param chunkNo           indicate the chunk number
      * @param replicationDegree indicates the desired replication degree
      */
-    public Message(String messageType, String version, String senderId, String fileId, String chunkNo, String replicationDegree) {
+    public Message(String messageType, String version, String senderId, String fileId, String chunkNo, String replicationDegree, byte[] body) {
         this.header = new Header(messageType, version, senderId, fileId, chunkNo, replicationDegree);
+        this.body = body;
     }
 
     /**
@@ -87,7 +88,6 @@ public class Message {
 
         //  matches one or many whitespaces and replaces them with one whitespace
         message[0].replaceAll("\\s+", " ");
-        System.out.print(message[0]);
         String[] header = message[0].split(" ");
 
         switch(header[1]) {
@@ -101,11 +101,6 @@ public class Message {
                     e.printStackTrace();
                 }
 
-                StringBuilder builder = new StringBuilder();
-                for(byte byteC :this.body){
-                    builder.append(String.format("%02X", byteC));
-                }
-                System.out.println(builder.toString());
                 break;
 
             case CHUNK:

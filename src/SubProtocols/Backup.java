@@ -109,17 +109,10 @@ public class Backup {
             return;
         }
 
-        /*for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
-            byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
-            this.sendPutChunkMessage(chuck, chuckNo, fileId);
-        }*/
-
-        // TESTING
-        for (int chuckNo = 0; chuckNo < 1; chuckNo++) {
+        for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
             byte[] chuck = inputFile.readNBytes(MAX_CHUNK_SIZE);
             this.sendPutChunkMessage(chuck, chuckNo, fileId);
         }
-
 
         inputFile.close();
     }
@@ -131,8 +124,8 @@ public class Backup {
      * @param fileId  : file id of the file
      */
     public void sendPutChunkMessage(byte[] chunk, int chunkNo, String fileId) {
-        Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()), fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg));
-        request.setBody(chunk);
+        Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()),
+                fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
 
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
 

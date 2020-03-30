@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Peer implements PeerInterface{
-    public static final String FILE_STORAGE_PATH = "../../storage";
+    public static final String FILE_STORAGE_PATH = "./storage";
     public static final int MAX_SIZE = 64000000;
 
     private final String version;
@@ -57,6 +57,7 @@ public class Peer implements PeerInterface{
         this.id = Integer.parseInt(id);
         this.serviceAccessPoint = serviceAccessPoint;
         this.currentSystemMemory = 0; // ?
+
 
         this.setupFiles();
         this.readProperties();
@@ -155,9 +156,8 @@ public class Peer implements PeerInterface{
      */
     private void saveMap(String path, ConcurrentHashMap map) {
         File out = new File(path);
-        if(!out.exists()) return;
-
         try {
+            if(!out.exists()) out.createNewFile();
             Properties properties = new Properties();
             properties.putAll(map);
             properties.store(new FileOutputStream(path), null);
@@ -178,9 +178,8 @@ public class Peer implements PeerInterface{
         String diskPath = FILE_STORAGE_PATH + "/" + this.id + "/diskInfo.properties";
         File diskInfo = new File(diskPath);
 
-        if(!diskInfo.exists()) return;
-
         try {
+            if(!diskInfo.exists()) diskInfo.createNewFile();
             Properties diskProperties = new Properties();
             diskProperties.setProperty("used", Integer.toString(this.currentSystemMemory));
             diskProperties.store(new FileOutputStream(diskPath), null);
@@ -328,12 +327,10 @@ public class Peer implements PeerInterface{
 
     public static void main(String[] args) throws IOException {
         String[] serviceAccessPoint = {"sda", "sad"};
-        String[] mcAddress = {"localhost", "45"};
-        String[] mdbAddress = {"localhost", "46"};
-        String[] mdrAddress = {"localhost", "48"};
+        String[] mcAddress = {"224.0.0.0", "4445"};
+        String[] mdbAddress = {"224.0.0.0", "4446"};
+        String[] mdrAddress = {"224.0.0.0", "4447"};
         Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-        Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-
-        peer1.backup("C:\\Users\\Martim\\Desktop\\feup-LBAW\\Theory\\01-intro.pdf", 1);
+        peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt" ,1);
     }
 }

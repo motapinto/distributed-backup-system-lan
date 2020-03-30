@@ -101,7 +101,6 @@ public class Backup {
 
         File file = new File(this.pathName);
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
-
         InputStream inputFile = new FileInputStream(file.getAbsolutePath());
 
         int numNecessaryChunks = (int)Math.ceil(file.length() / MAX_CHUNK_SIZE);

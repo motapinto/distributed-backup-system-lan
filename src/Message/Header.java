@@ -82,8 +82,6 @@ public class Header {
             header += " " + this.replicationDeg;
         }
 
-        header += CRLF;
-
         return header;
     }
 

@@ -54,10 +54,11 @@ public class Channel implements Runnable {
     @Override
     public void run() {
         while (true) {
+            System.out.print("lol");
             try {
                 DatagramPacket received = this.receive();
-
                 Dispatcher handler = new Dispatcher(this.peer, received);
+                peer.getReceiverExecutor().submit(handler);
 
             } catch (IOException e) {
                 Logs.logError("Error handling peer" + e);

@@ -1,5 +1,7 @@
 package Message;
 
+import Common.Logs;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,8 +62,12 @@ public class Message {
      * @param packet : DatagramPacket containing message
      */
     public Message(DatagramPacket packet) {
-
-        this.parseMessage(packet.getData());
+        try {
+            this.parseMessage(packet.getData());
+        } catch (IOException e) {
+            Logs.logError("Error parsing message");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -70,7 +76,12 @@ public class Message {
      * @param message : message bytes array
      */
     public Message(byte[] message) {
-        this.parseMessage(message);
+        try {
+            this.parseMessage(message);
+        } catch (IOException e) {
+            Logs.logError("Error parsing message");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -78,13 +89,10 @@ public class Message {
      *
      * @param bytes : array of bytes
      */
-    private void parseMessage(byte[] bytes)  {
+    private void parseMessage(byte[] bytes) throws IOException {
 
         String[] message = (new String(bytes)).split(CRLF + CRLF);
-
-        ByteArrayInputStream bodyInputStream = new ByteArrayInputStream(bytes);
-        bodyInputStream.skip(message[0].length() + 4);
-        byte[] body;
+        int headerSize = message[0].length();
 
         //  matches one or many whitespaces and replaces them with one whitespace
         message[0].replaceAll("\\s+", " ");
@@ -93,25 +101,21 @@ public class Message {
         switch(header[1]) {
             case PUTCHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5]);
-                this.body = new byte[bytes.length - this.header.toString().length() - 4];
 
-                try {
-                    bodyInputStream.read(this.body);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                this.body = new byte[bytes.length - this.header.toString().length() - 4];
+                ByteArrayInputStream putchunkInputStream = new ByteArrayInputStream(bytes);
+                putchunkInputStream.skip(headerSize + 4);
+                putchunkInputStream.read(this.body);
 
                 break;
 
             case CHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4]);
-                this.body = new byte[bytes.length - this.header.toString().length() - 4];
 
-                try {
-                    bodyInputStream.read(this.body);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                this.body = new byte[bytes.length - this.header.toString().length() - 4];
+                ByteArrayInputStream chunkInputStream = new ByteArrayInputStream(bytes);
+                chunkInputStream.skip(headerSize + 4);
+                chunkInputStream.read(this.body);
 
                 break;
 
@@ -148,28 +152,15 @@ public class Message {
     }
 
     public byte[] toBytes() {
-
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         try {
             outputStream.write(this.header.toString().getBytes());
-
-            outputStream.write(' ');
-            outputStream.write(CR);
-            outputStream.write(LF);
-            outputStream.write(CR);
-            outputStream.write(LF);
-
-            if(this.body != null)
-
-
-                outputStream.write(this.body);
-
+            outputStream.write(' ' + CR + LF + CR + LF);
+            if(this.body != null) outputStream.write(this.body);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return outputStream.toByteArray();
-
     }
 
     public Header getHeader() {
@@ -179,10 +170,4 @@ public class Message {
     public byte[] getBody() {
         return this.body;
     }
-
-    public void setBody(byte[] body) {
-        this.body = body;
-    }
 }
-
-

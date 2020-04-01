@@ -12,8 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Peer implements PeerInterface{
-
-
     private final String version;
     private int id;
     private final String[] serviceAccessPoint;
@@ -21,9 +19,9 @@ public class Peer implements PeerInterface{
 
     public static final String FILE_STORAGE_PATH = "./storage";
     public static final int MAX_SIZE = 64000000;
-    public String REPLICATION_DEGREE_INFO_PATH = FILE_STORAGE_PATH + "/" + "1" + "/replicationDegreeInfo.properties";
-    public String DISK_INFO_PATH = FILE_STORAGE_PATH + "/1" + "/diskInfo.properties";
-    public String STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/1" + "/storedChunkHistory.properties";
+    public String REPLICATION_DEGREE_INFO_PATH;
+    public String DISK_INFO_PATH ;
+    public String STORED_CHUNK_HISTORY_PATH;
 
     /** Channels */
     private Channel controlChannel;
@@ -61,15 +59,16 @@ public class Peer implements PeerInterface{
         this.version = version;
         this.id = Integer.parseInt(id);
         this.serviceAccessPoint = serviceAccessPoint;
-        this.currentSystemMemory = 0; // ?
 
+        REPLICATION_DEGREE_INFO_PATH = FILE_STORAGE_PATH + "/" + this.id + "/replicationDegreeInfo.properties";
+        DISK_INFO_PATH = FILE_STORAGE_PATH + "/" + this.id + "/diskInfo.properties";
+        STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/" + this.id + "/storedChunkHistory.properties";
 
         this.setupFiles();
         this.readProperties();
         this.setupChannels(mcAddress, mdbAddress, mdrAddresss);
         this.setupExecutors();
         this.createProtocols();
-        this.saveProperties();
     }
 
     /**
@@ -84,7 +83,7 @@ public class Peer implements PeerInterface{
      * Reads all properties files
      */
     private void readProperties() {
-        // Get chunks replication degree info
+        readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
 
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
 
@@ -159,15 +158,18 @@ public class Peer implements PeerInterface{
      * https://mkyong.com/java/java-properties-file-examples/
      */
     private void saveMap(String path, ConcurrentHashMap map) {
-        File out = new File(path);
+        System.out.println("saveMap init");
+
+        Properties properties = new Properties();
+        properties.putAll(map);
+
         try {
-            if(!out.exists()) out.createNewFile();
-            Properties properties = new Properties();
-            properties.putAll(map);
             properties.store(new FileOutputStream(path), null);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        System.out.println("saveMap final");
     }
 
     /**
@@ -177,19 +179,6 @@ public class Peer implements PeerInterface{
         // Save chunks replication degree info
         String repDegPath = FILE_STORAGE_PATH + "/" + this.id + "/replicationDegreeInfo.properties";
         saveMap(repDegPath, this.repDegreeInfo);
-
-        // Save disk space info
-        String DISK_INFO_PATH = FILE_STORAGE_PATH + "/" + this.id + "/diskInfo.properties";
-        File diskInfo = new File(DISK_INFO_PATH);
-
-        try {
-            if(!diskInfo.exists()) diskInfo.createNewFile();
-            Properties diskProperties = new Properties();
-            diskProperties.setProperty("used", Integer.toString(this.currentSystemMemory));
-            diskProperties.store(new FileOutputStream(DISK_INFO_PATH), null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void backup(String pathName, int replicationDegree) throws IOException {
@@ -224,13 +213,17 @@ public class Peer implements PeerInterface{
     public int getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
         String id = fileId + "_" + chunkNo;
 
+        System.out.println("getRepDegreeInfo init");
+
         int index;
         if(getCurrent) index = 0;
         else index = 1;
-        System.out.println(this.repDegreeInfo.get(id));
+        System.out.println("rep degree get value: " + this.repDegreeInfo.get(id));
         if(this.repDegreeInfo.get(id) != null) {
+            System.out.println("getRepDegreeInfo final\n\n");
             return Integer.parseInt(this.repDegreeInfo.get(id).split("_")[index]);
         } else {
+            System.out.println("getRepDegreeInfo final\n\n");
             return -1;
         }
     }
@@ -246,23 +239,26 @@ public class Peer implements PeerInterface{
     public void incrementRepDegreeInfo(String senderId, String fileId, String chunkNo) {
         System.out.println("INCREMENT REP DEG");
         String id = fileId + "_" + chunkNo;
-        if(this.storedChunkHistory.get(senderId + "_" + id) == null) {
-            this.storedChunkHistory.put(senderId + "_" + id, senderId);
-            this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
+        //if(this.storedChunkHistory.get(senderId + "_" + id) == null) {
+            //this.storedChunkHistory.put(senderId + "_" + id, senderId);
+            //this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
 
             if(this.repDegreeInfo.get(id) != null) {
                 int currentRepDegree = getRepDegreeInfo(fileId, chunkNo, true) + 1;
                 int desiredRepDegree = getRepDegreeInfo(fileId, chunkNo, false);
-                this.setRepDegreeInfo(fileId, chunkNo, desiredRepDegree, currentRepDegree);
+                this.setRepDegreeInfo(fileId, chunkNo, currentRepDegree, desiredRepDegree);
             }
-        }
+        //}
     }
 
-    public void setRepDegreeInfo(String fileId, String chunkNo, int desiredRepDegree, int value) {
+    public void setRepDegreeInfo(String fileId, String chunkNo, int currRepDegree, int desiredRepDegree) {
+        System.out.println("setRepDegreeInfo init");
+        System.out.println("ARGS: " + fileId + " " + chunkNo + " " + desiredRepDegree + " " + currRepDegree);
         String id = fileId + "_" + chunkNo;
-        this.repDegreeInfo.put(id, value + "_" + desiredRepDegree);
+        this.repDegreeInfo.put(id, currRepDegree + "_" + desiredRepDegree);
         this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
-        System.out.println(this.repDegreeInfo.get(id));
+        System.out.println("NEW REP DEGREE: " + this.repDegreeInfo.get(id));
+        System.out.println("setRepDegreeInfo final\n\n");
     }
 
     public int getAvailableStorage() {
@@ -307,30 +303,29 @@ public class Peer implements PeerInterface{
 
     public void setCurrentSystemMemory(int currentSystemMemory) {
         this.currentSystemMemory = currentSystemMemory;
+
+        // Save disk space info
+        File diskInfo = new File(DISK_INFO_PATH);
+        Properties diskProperties = new Properties();
+        diskProperties.setProperty("used", Integer.toString(this.currentSystemMemory));
+
+        try {
+            diskProperties.store(new FileOutputStream(DISK_INFO_PATH), null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public ExecutorService getSenderExecutor() {
         return senderExecutor;
     }
 
-    public void setSenderExecutor(ExecutorService senderExecutor) {
-        this.senderExecutor = senderExecutor;
-    }
-
     public ExecutorService getDeliverExecutor() {
         return deliverExecutor;
     }
 
-    public void setDeliverExecutor(ExecutorService deliverExecutor) {
-        this.deliverExecutor = deliverExecutor;
-    }
-
     public ExecutorService getReceiverExecutor() {
         return receiverExecutor;
-    }
-
-    public void setReceiverExecutor(ExecutorService receiverExecutor) {
-        this.receiverExecutor = receiverExecutor;
     }
 
     public static void main(String[] args) throws IOException {

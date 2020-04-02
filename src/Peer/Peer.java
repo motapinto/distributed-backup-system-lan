@@ -2,7 +2,6 @@ package Peer;
 
 import Channels.*;
 import Common.Logs;
-import Message.Message;
 import SubProtocols.*;
 import static Common.Constants.*;
 
@@ -18,7 +17,7 @@ public class Peer implements PeerInterface{
     private final String[] serviceAccessPoint;
     private int currentSystemMemory;
 
-    public static String FILE_STORAGE_PATH = "../storage";
+    public static final String FILE_STORAGE_PATH = "./storage";
     public static final int MAX_SIZE = 64000000;
     public String REPLICATION_DEGREE_INFO_PATH;
     public String DISK_INFO_PATH ;
@@ -39,6 +38,9 @@ public class Peer implements PeerInterface{
     private ExecutorService senderExecutor;
     private ExecutorService deliverExecutor;
     private ExecutorService receiverExecutor;
+
+    /** Sring: fileId    |    Backup: backup protocol for a file with fileId */
+    private ConcurrentHashMap<String, Backup> backupProtocolMap = new ConcurrentHashMap<>();
 
     /**
      * String : "fileId_chuckNo"   |   String : "repDegree_desiredRepDegree"
@@ -82,6 +84,7 @@ public class Peer implements PeerInterface{
      */
     private void readProperties() {
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
 
         // Get disk space info
@@ -155,13 +158,18 @@ public class Peer implements PeerInterface{
      * https://mkyong.com/java/java-properties-file-examples/
      */
     private void saveMap(String path, ConcurrentHashMap map) {
+        System.out.println("saveMap init");
+
         Properties properties = new Properties();
         properties.putAll(map);
+
         try {
             properties.store(new FileOutputStream(path), null);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        System.out.println("saveMap final");
     }
 
     /**
@@ -169,42 +177,54 @@ public class Peer implements PeerInterface{
      */
     private void saveProperties() {
         // Save chunks replication degree info
-        saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
-        saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
+        String repDegPath = FILE_STORAGE_PATH + "/" + this.id + "/replicationDegreeInfo.properties";
+        saveMap(repDegPath, this.repDegreeInfo);
     }
 
     public void backup(String pathName, int replicationDegree) throws IOException {
+
+
         if(replicationDegree > MAX_REPLICATION_DEGREE) {
             Logs.logError("Maximum replication Degree reached!");
             return;
         }
+
         this.backup = new Backup(this, pathName, replicationDegree);
+
+        // finish all the pending tasks related with PUTCHUNK
+
+
         this.backup.startPutchunkProcedure();
+
+        this.backupProtocolMap.put(backup.getFileId(), backup);
     }
 
     public void restore(String pathname) {}
 
-    public void delete(String pathname) {}
+    public void delete(String pathname) {
 
-    public void reclaim(int maxDiskSpace) {}
+    }
+
+    public void reclaim(int maxDiskSpace) {
+
+    }
 
     /** Returns desired/current replication degree for a pair (fileId, chuckNo) */
-    public String getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
+    public int getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
+        String id = fileId + "_" + chunkNo;
 
+        System.out.println("getRepDegreeInfo init");
 
-        System.out.println("Entrei no getRepDegree");
-        String chunkId = fileId + "_" + chunkNo;
-        printMap(this.repDegreeInfo);
-        System.out.println("chuckId: " + chunkId);
         int index;
         if(getCurrent) index = 0;
         else index = 1;
-
-        if(this.repDegreeInfo.get(chunkId) != null) {
-            return this.repDegreeInfo.get(chunkId).split("_")[index];
-        }
-        else {
-            return null;
+        System.out.println("rep degree get value: " + this.repDegreeInfo.get(id));
+        if(this.repDegreeInfo.get(id) != null) {
+            System.out.println("getRepDegreeInfo final\n\n");
+            return Integer.parseInt(this.repDegreeInfo.get(id).split("_")[index]);
+        } else {
+            System.out.println("getRepDegreeInfo final\n\n");
+            return -1;
         }
     }
 
@@ -212,49 +232,34 @@ public class Peer implements PeerInterface{
      * This function increments the replication degree of the chunk with id = fileId + "_" + chunkNo
      * only if this is the first time that the sender of a message as sent the STORED message
      *
-     * @param message PUTCHUNK message that came from the peer that wants this peer to store the chunk
+     * @param senderId : sender id
+     * @param fileId   : file id
+     * @param chunkNo  : number of the chunk
      */
-    public void incrementRepDegreeInfo(Message message, boolean sender) {
+    public void incrementRepDegreeInfo(String senderId, String fileId, String chunkNo) {
         System.out.println("INCREMENT REP DEG");
-        String fileId = message.getHeader().getFileId();
-        String chunkNo = message.getHeader().getChuckNo();
-        String chunkId = fileId + "_" + chunkNo;
-        String senderId = message.getHeader().getSenderId() + "_" + chunkId;
+        String id = fileId + "_" + chunkNo;
+        //if(this.storedChunkHistory.get(senderId + "_" + id) == null) {
+            //this.storedChunkHistory.put(senderId + "_" + id, senderId);
+            //this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
 
-        String currentRepDegree;
-        String desiredRepDegree;
-        if(sender)
-            currentRepDegree = "0";
-
-
-        else
-            currentRepDegree = "1";
-
-        desiredRepDegree = message.getHeader().getReplicationDeg();
-
-        if(this.storedChunkHistory.get(senderId) == null) {
-            this.storedChunkHistory.put(senderId, senderId);
-
-            if(this.repDegreeInfo.get(chunkId) != null) {
-                currentRepDegree = getRepDegreeInfo(fileId, chunkNo, true) + 1;
-                desiredRepDegree = getRepDegreeInfo(fileId, chunkNo, false);
-                System.out.println("Desired rep degree = " + desiredRepDegree);
+            if(this.repDegreeInfo.get(id) != null) {
+                int currentRepDegree = getRepDegreeInfo(fileId, chunkNo, true) + 1;
+                int desiredRepDegree = getRepDegreeInfo(fileId, chunkNo, false);
+                this.setRepDegreeInfo(fileId, chunkNo, currentRepDegree, desiredRepDegree);
             }
-            this.repDegreeInfo.put(chunkId, currentRepDegree + "_" + desiredRepDegree);
-            saveProperties();
-        }
+        //}
     }
 
-
-
-    public void printMap(ConcurrentHashMap<String, String> map){
-        for (String key : map.keySet()) {
-            System.out.println(key + " " + map.get(key));
-        }
+    public void setRepDegreeInfo(String fileId, String chunkNo, int currRepDegree, int desiredRepDegree) {
+        System.out.println("setRepDegreeInfo init");
+        System.out.println("ARGS: " + fileId + " " + chunkNo + " " + desiredRepDegree + " " + currRepDegree);
+        String id = fileId + "_" + chunkNo;
+        this.repDegreeInfo.put(id, currRepDegree + "_" + desiredRepDegree);
+        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+        System.out.println("NEW REP DEGREE: " + this.repDegreeInfo.get(id));
+        System.out.println("setRepDegreeInfo final\n\n");
     }
-
-
-
 
     public int getAvailableStorage() {
         return MAX_SIZE -  this.currentSystemMemory;
@@ -330,12 +335,10 @@ public class Peer implements PeerInterface{
         String[] mdrAddress = {"224.0.0.2", "4447"};
 
         if(args[0].equals("1")) {
-            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
             peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt" ,1);
         }
         else {
-            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
         }
     }

@@ -71,12 +71,13 @@ public class Dispatcher implements Runnable{
      */
     public void receiveMessage() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
+        System.out.println(this.message.getHeader().getMessageType() + " from:" + this.message.getHeader().getSenderId());
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
                 this.peer.getBackup().startStoredProcedure(message);
                 break;
             case STORED:
-                this.peer.incrementRepDegreeInfo(message ,false);
+                this.peer.incrementRepDegreeInfo(this.message.getHeader().getSenderId(), this.message.getHeader().getFileId(), this.message.getHeader().getChuckNo());
             case GETCHUNK:
                 break;
             case DELETE:

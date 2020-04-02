@@ -52,11 +52,7 @@ public class Backup {
 
         File out = new File(pathName);
         // If the chunk is already stored then it does not make anything else
-        if(out.exists()){
-            return;
-        }
-
-        System.out.println(pathName);
+        if(out.exists()) return;
 
         // If the directory Storage/SenderId/FileId does not exist creates it
         if(!out.getParentFile().exists()) out.getParentFile().mkdirs();
@@ -72,14 +68,12 @@ public class Backup {
             e.printStackTrace();
         }
 
-
-
         // Updates current system memory of the peer
         this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
 
         // Updates replication degree of the chunk - DOES NOT WORK
         System.out.println("PEER2: before setRepDegreeInfo");
-        this.peer.incrementRepDegreeInfo(message, false);
+        this.peer.setRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), 1, Integer.parseInt(message.getHeader().getReplicationDeg()));
         System.out.println("PEER2: after setRepDegreeInfo");
     }
 
@@ -93,8 +87,6 @@ public class Backup {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        System.out.println(message.getHeader().toString());
 
         Message reply = new Message(STORED, this.peer.getVersion(), Integer.toString(this.peer.getId()),
                 message.getHeader().getFileId(), message.getHeader().getChuckNo());
@@ -117,10 +109,10 @@ public class Backup {
             Logs.logError("File can only have  ");
             return;
         }
-        byte[] chunk;
+
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
-            chunk = new byte[MAX_CHUNK_SIZE];
-            inputFile.read(chunk);
+            byte[] chunk = inputFile.readNBytes(MAX_CHUNK_SIZE);
+            this.peer.setRepDegreeInfo(this.fileId, Integer.toString(chuckNo), this.desiredRepDeg, 0);
             this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
         }
 
@@ -137,38 +129,27 @@ public class Backup {
         Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()),
                 fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
 
-        this.peer.incrementRepDegreeInfo(request, true);
-
-        System.out.println(request.toString());
-
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
 
         int repDeg = 0;
         int tries = 1;
         int sleepTime = 1000;
-        String repDegString;
 
         // while (repDeg < this.desiredRepDeg && tries <= 5) {
 
         // TESTING
         while(repDeg < this.desiredRepDeg){
 
-            this.peer.getSenderExecutor().submit(dispatcher);
+            repDeg = this.peer.getRepDegreeInfo(Integer.toString(this.peer.getId()), Integer.toString(chunkNo), true);
+            if(repDeg < this.desiredRepDeg) {
+                this.peer.getSenderExecutor().submit(dispatcher);
+            }
 
             try {
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
-            if(repDegString != null){
-                repDeg =  Integer.parseInt(repDegString);
-            }
-            else{
-                System.out.println("Error looking in map for chunk");
-            }
-
 
             tries ++;
             sleepTime *= 2;

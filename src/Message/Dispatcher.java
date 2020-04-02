@@ -58,7 +58,7 @@ public class Dispatcher implements Runnable{
                 break;
 
             case SENDER:
-                this.sendMessageToChannel(this.message);
+                this.sendMessageToChannel();
                 break;
 
             default:
@@ -80,6 +80,7 @@ public class Dispatcher implements Runnable{
             case GETCHUNK:
                 break;
             case DELETE:
+                this.peer.getDelete().deleteFile(this.peer, this.message.getHeader().getFileId());
                 break;
             case REMOVED:
                 break;
@@ -88,16 +89,14 @@ public class Dispatcher implements Runnable{
 
     /**
      * Delivers a message to a channel
-     *
-     * @param message : message to be sent
      */
-    public void sendMessageToChannel(Message message) {
+    public void sendMessageToChannel() {
         DatagramPacket packet;
         DatagramSocket socket;
 
         try {
             socket = new DatagramSocket();
-            byte[] buf = message.toBytes();
+            byte[] buf = this.message.toBytes();
             packet = new DatagramPacket(buf, buf.length, InetAddress.getByName(this.address), this.port);
             socket.send(packet);
         } catch (IOException e) {

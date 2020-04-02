@@ -184,14 +184,15 @@ public class Peer implements PeerInterface{
 
     public void restore(String pathname) {}
 
-    public void delete(String pathname) {}
+    public void delete(String pathname) {
+        this.delete = new Delete(this, pathname);
+        this.delete.startDeleteProcedure();
+    }
 
     public void reclaim(int maxDiskSpace) {}
 
     /** Returns desired/current replication degree for a pair (fileId, chuckNo) */
     public String getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
-
-
         System.out.println("Entrei no getRepDegree");
         String chunkId = fileId + "_" + chunkNo;
         printMap(this.repDegreeInfo);
@@ -253,7 +254,14 @@ public class Peer implements PeerInterface{
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if(o == this) return true;
+        if(!(o instanceof Peer)) return true;
 
+        Peer c = (Peer)o;
+        return c.getId() == this.id;
+    }
 
 
     public int getAvailableStorage() {
@@ -285,7 +293,19 @@ public class Peer implements PeerInterface{
     }
 
     public Backup getBackup() {
-        return backup;
+        return this.backup;
+    }
+
+    public Delete getDelete() {
+        return this.delete;
+    }
+
+    public Restore getRestore() {
+        return this.restore;
+    }
+
+    public SpaceReclaim getSpaceReclaim() {
+        return this.reclaim;
     }
 
     public ConcurrentHashMap<String, String> getRepDegreeInfo() {

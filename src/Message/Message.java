@@ -6,6 +6,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.nio.charset.StandardCharsets;
+
 import static Common.Constants.*;
 
 public class Message {
@@ -91,6 +93,7 @@ public class Message {
      */
     private void parseMessage(byte[] bytes) throws IOException {
 
+        System.out.println(new String(bytes));
         String[] message = (new String(bytes)).split(CRLF + CRLF);
         int headerSize = message[0].length();
 
@@ -106,6 +109,8 @@ public class Message {
                 ByteArrayInputStream putchunkInputStream = new ByteArrayInputStream(bytes);
                 putchunkInputStream.skip(headerSize + 4);
                 putchunkInputStream.read(this.body);
+
+                System.out.println("HEADER : " + this.header.toString());
 
                 break;
 
@@ -137,7 +142,8 @@ public class Message {
     @Override
     public String toString() {
         String header = this.header.toString();
-        return(this.body == null) ? header : header + CRLF + CRLF + printBodyHex();
+        String body = new String(this.body);
+        return(this.body == null) ? header : header + CRLF + CRLF + body;
     }
 
     public String printBodyHex(){
@@ -152,15 +158,7 @@ public class Message {
     }
 
     public byte[] toBytes() {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-        try {
-            outputStream.write(this.header.toString().getBytes());
-            outputStream.write(' ' + CR + LF + CR + LF);
-            if(this.body != null) outputStream.write(this.body);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return outputStream.toByteArray();
+        return this.toString().getBytes();
     }
 
     public Header getHeader() {

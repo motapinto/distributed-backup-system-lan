@@ -223,15 +223,10 @@ public class Peer implements PeerInterface{
         String senderId = message.getHeader().getSenderId() + "_" + chunkId;
 
         String currentRepDegree;
-        String desiredRepDegree;
-        if(sender)
-            currentRepDegree = "0";
+        if(sender) currentRepDegree = "0";
+        else currentRepDegree = "1";
 
-
-        else
-            currentRepDegree = "1";
-
-        desiredRepDegree = message.getHeader().getReplicationDeg();
+        String desiredRepDegree = message.getHeader().getReplicationDeg();
 
         if(this.storedChunkHistory.get(senderId) == null) {
             this.storedChunkHistory.put(senderId, senderId);
@@ -245,8 +240,6 @@ public class Peer implements PeerInterface{
             saveProperties();
         }
     }
-
-
 
     public void printMap(ConcurrentHashMap<String, String> map){
         for (String key : map.keySet()) {
@@ -309,7 +302,11 @@ public class Peer implements PeerInterface{
     }
 
     public ConcurrentHashMap<String, String> getRepDegreeInfo() {
-        return repDegreeInfo;
+        return this.repDegreeInfo;
+    }
+
+    public ConcurrentHashMap<String, String> getStoredChunkHistory() {
+        return this.storedChunkHistory;
     }
 
     public int getCurrentSystemMemory() {
@@ -320,7 +317,6 @@ public class Peer implements PeerInterface{
         this.currentSystemMemory = currentSystemMemory;
 
         // Save disk space info
-        File diskInfo = new File(DISK_INFO_PATH);
         Properties diskProperties = new Properties();
         diskProperties.setProperty("used", Integer.toString(this.currentSystemMemory));
 

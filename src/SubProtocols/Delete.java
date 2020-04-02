@@ -7,8 +7,6 @@ import Message.Dispatcher;
 
 import java.io.File;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import static Common.Constants.DELETE;
 
 public class Delete {
@@ -69,17 +67,28 @@ public class Delete {
      */
     public void deleteFile(Peer peer, String fileId) {
 
+        Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
+        Map<String, String> storedHistory = peer.getStoredChunkHistory();
 
         if(this.peer.equals(peer)) {
+            File file =new File(this.peer.FILE_STORAGE_PATH + "/" + fileId);
+            int bytes = (int)file.length();
+
+            for(Map.Entry<String, String> entry : repDegreeInfo.entrySet()) {
+                String key = entry.getKey();
+                if(key.split("_")[0].equals(fileId)) {
+                    //estamos a mudar o mapa efetivamente assim? ou temos de mudar no peer?
+                    repDegreeInfo.remove(key);
+                    storedHistory.remove(key);
+                    this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() - bytes);
+                }
+
+            }
 
         } else {
 
 
         }
-
-
-
-        Map<String, String> repDegreeInfo = this.peer.getRepDegreeInfo();
 
 
     }

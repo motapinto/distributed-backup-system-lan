@@ -1,16 +1,14 @@
 package Channels;
 
-import Common.Logs;
-import Message.Dispatcher;
-import Message.Message;
-import Peer.Peer;
-import static Common.Constants.MAX_PACKET_SIZE;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.sql.SQLOutput;
+
+import Common.Logs;
+import Message.Dispatcher;
+import Peer.Peer;
+import static Common.Constants.MAX_PACKET_SIZE;
 
 public class Channel implements Runnable {
     protected Peer peer;
@@ -84,11 +82,4 @@ public class Channel implements Runnable {
      * Returns the channel address
      */
     public String getAddress() { return address; }
-
-    /**
-     * Closes the multicast socket
-     */
-    public void closeSocket() {
-        this.multicastSocket.close();
-    }
 }

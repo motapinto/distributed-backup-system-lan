@@ -1,15 +1,16 @@
 package Message;
 
-import Peer.Peer;
-import Channels.Channel;
-import static Common.Constants.*;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
+import Peer.Peer;
+import Channels.Channel;
+import static Common.Constants.*;
+
 public class Dispatcher implements Runnable{
+
     private Peer peer;
     private Message message;
     private MessageType type;
@@ -55,7 +56,7 @@ public class Dispatcher implements Runnable{
     public void run() {
         switch (this.type) {
             case RECEIVER:
-                this.receiveMessage();
+                this.receiveMessageFromChannel();
                 break;
             case SENDER:
                 this.sendMessageToChannel();
@@ -69,7 +70,7 @@ public class Dispatcher implements Runnable{
     /**
      * Function responsible to receiving requests and does the handling
      */
-    public void receiveMessage() {
+    public void receiveMessageFromChannel() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
         System.out.println("Received:");
         System.out.println(this.message.getHeader().toString());
@@ -82,6 +83,7 @@ public class Dispatcher implements Runnable{
             case GETCHUNK:
                 break;
             case DELETE:
+                this.peer.getDelete().deleteFile(this.peer, this.message.getHeader().getFileId());
                 break;
             case REMOVED:
                 break;
@@ -90,7 +92,6 @@ public class Dispatcher implements Runnable{
 
     /**
      * Delivers a message to a channel
-     *
      */
     public void sendMessageToChannel() {
         DatagramPacket packet;

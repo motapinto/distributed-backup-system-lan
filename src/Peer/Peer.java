@@ -126,7 +126,7 @@ public class Peer implements PeerInterface{
      */
     private void createProtocols() {
         this.backup = new Backup(this);
-        /*this.delete = new Delete();
+        this.delete = new Delete(this); /*
         this.restore = new Restore();
         this.reclaim = new SpaceReclaim();*/
     }
@@ -154,7 +154,7 @@ public class Peer implements PeerInterface{
      * A .properties file is a simple collection of KEY-VALUE pairs that can be parsed by the java.util.Properties class.
      * https://mkyong.com/java/java-properties-file-examples/
      */
-    private void saveMap(String path, ConcurrentHashMap map) {
+    public void saveMap(String path, ConcurrentHashMap map) {
         Properties properties = new Properties();
         properties.putAll(map);
         try {
@@ -184,7 +184,10 @@ public class Peer implements PeerInterface{
 
     public void restore(String pathname) {}
 
-    public void delete(String pathname) {}
+    public void delete(String pathname) {
+        this.delete = new Delete(this, pathname);
+        this.delete.startDeleteProcedure();
+    }
 
     public void reclaim(int maxDiskSpace) {}
 
@@ -221,15 +224,10 @@ public class Peer implements PeerInterface{
         printMap(this.repDegreeInfo);
 
         String currentRepDegree;
-        String desiredRepDegree;
-        if(sender)
-            currentRepDegree = "0";
+        if(sender) currentRepDegree = "0";
+        else currentRepDegree = "1";
 
-
-        else
-            currentRepDegree = "1";
-
-        desiredRepDegree = message.getHeader().getReplicationDeg();
+        String desiredRepDegree = message.getHeader().getReplicationDeg();
 
         if(this.storedChunkHistory.get(senderId) == null) {
 
@@ -246,15 +244,20 @@ public class Peer implements PeerInterface{
         }
     }
 
-
-
     public void printMap(ConcurrentHashMap<String, String> map){
         for (String key : map.keySet()) {
             System.out.println(key + " " + map.get(key));
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if(o == this) return true;
+        if(!(o instanceof Peer)) return true;
 
+        Peer c = (Peer)o;
+        return c.getId() == this.id;
+    }
 
 
     public int getAvailableStorage() {
@@ -286,11 +289,27 @@ public class Peer implements PeerInterface{
     }
 
     public Backup getBackup() {
-        return backup;
+        return this.backup;
+    }
+
+    public Delete getDelete() {
+        return this.delete;
+    }
+
+    public Restore getRestore() {
+        return this.restore;
+    }
+
+    public SpaceReclaim getSpaceReclaim() {
+        return this.reclaim;
     }
 
     public ConcurrentHashMap<String, String> getRepDegreeInfo() {
-        return repDegreeInfo;
+        return this.repDegreeInfo;
+    }
+
+    public ConcurrentHashMap<String, String> getStoredChunkHistory() {
+        return this.storedChunkHistory;
     }
 
     public int getCurrentSystemMemory() {
@@ -301,7 +320,6 @@ public class Peer implements PeerInterface{
         this.currentSystemMemory = currentSystemMemory;
 
         // Save disk space info
-        File diskInfo = new File(DISK_INFO_PATH);
         Properties diskProperties = new Properties();
         diskProperties.setProperty("used", Integer.toString(this.currentSystemMemory));
 

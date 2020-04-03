@@ -64,7 +64,6 @@ public class Backup {
             out.createNewFile();
 
             FileOutputStream fos = new FileOutputStream(pathName);
-            System.out.println(message.getBody().length);
             fos.write(message.getBody());
             fos.close();
         } catch (IOException e) {
@@ -77,9 +76,9 @@ public class Backup {
         this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
 
         // Updates replication degree of the chunk - DOES NOT WORK
-        System.out.println("PEER2: before setRepDegreeInfo");
-        this.peer.incrementRepDegreeInfo(message, false);
-        System.out.println("PEER2: after setRepDegreeInfo");
+
+        this.peer.incrementRepDegreeInfo(message);
+
     }
 
     /**
@@ -110,10 +109,7 @@ public class Backup {
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
         InputStream inputFile = new FileInputStream(file.getAbsolutePath());
 
-        System.out.println((double)file.length() /MAX_CHUNK_SIZE);
         int numNecessaryChunks =(int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
-        System.out.println(file.length());
-        System.out.println("necessary chunks :" + numNecessaryChunks);
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {
             Logs.logError("File can only have  ");
             return;
@@ -126,7 +122,6 @@ public class Backup {
 
             if(chuckNo == numNecessaryChunks - 1 && bytesRead < MAX_CHUNK_SIZE) {
                 byte[] tmp = new byte[bytesRead];
-                System.out.println("BYTES READ LAST CHUNK" + bytesRead);
                 System.arraycopy(chunk, 0, tmp, 0, bytesRead);
                 this.sendPutChunkMessage(tmp, chuckNo, this.fileId);
             }
@@ -148,18 +143,15 @@ public class Backup {
         Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()),
                 fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
 
-        this.peer.incrementRepDegreeInfo(request, true);
+        this.peer.incrementRepDegreeInfo(request);
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
 
-        int repDeg = 0;
-        int tries = 1;
         int sleepTime = 1000;
-        String repDegString;
+        String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
+        int repDeg =  Integer.parseInt(repDegString);
 
-        // while (repDeg < this.desiredRepDeg && tries <= 5) {
 
-        // TESTING
-        while(repDeg < this.desiredRepDeg){
+        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= 5; tries++, sleepTime *= 2) {
 
             this.peer.getSenderExecutor().submit(dispatcher);
 
@@ -170,16 +162,7 @@ public class Backup {
             }
 
             repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
-            if(repDegString != null){
-                repDeg =  Integer.parseInt(repDegString);
-            }
-            else{
-                System.out.println("Error looking in map for chunk");
-            }
-
-
-            tries ++;
-            sleepTime *= 2;
+            repDeg =  Integer.parseInt(repDegString);
         }
     }
 

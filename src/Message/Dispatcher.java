@@ -79,7 +79,7 @@ public class Dispatcher implements Runnable{
                 this.peer.getBackup().startStoredProcedure(message);
                 break;
             case STORED:
-                this.peer.incrementRepDegreeInfo(message ,false);
+                this.peer.incrementRepDegreeInfo(message);
             case GETCHUNK:
                 break;
             case DELETE:

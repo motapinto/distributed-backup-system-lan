@@ -7,6 +7,7 @@ import SubProtocols.*;
 import static Common.Constants.*;
 
 import java.io.*;
+import java.sql.SQLOutput;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -80,23 +81,25 @@ public class Peer implements PeerInterface{
     /**
      * Reads all properties files
      */
-    private void readProperties() {
+    private void readProperties() throws IOException {
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
-        readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+        readMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
 
         // Get disk space info
         File diskInfo = new File(DISK_INFO_PATH);
 
-        if (diskInfo.exists()) {
-            Properties diskProperties = new Properties();
-            try {
-                diskProperties.load(new FileInputStream(DISK_INFO_PATH));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            this.currentSystemMemory = Integer.parseInt(diskProperties.getProperty("used"));
+        if (!diskInfo.exists()) {
+            this.setCurrentSystemMemory(0);
         }
+        Properties diskProperties = new Properties();
+        try {
+            diskProperties.load(new FileInputStream(DISK_INFO_PATH));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        this.currentSystemMemory = Integer.parseInt(diskProperties.getProperty("used"));
+
     }
 
 
@@ -212,36 +215,35 @@ public class Peer implements PeerInterface{
      *
      * @param message PUTCHUNK message that came from the peer that wants this peer to store the chunk
      */
-    public void incrementRepDegreeInfo(Message message, boolean sender) {
-        //System.out.println("INCREMENT REP DEG");
+    public void incrementRepDegreeInfo(Message message) {
         String fileId = message.getHeader().getFileId();
         String chunkNo = message.getHeader().getChuckNo();
         String chunkId = fileId + "_" + chunkNo;
-        String senderId = message.getHeader().getSenderId() + "_" + chunkId;
-
-
-
-        printMap(this.repDegreeInfo);
+        String senderId = message.getHeader().getSenderId();
 
         String currentRepDegree;
-        if(sender) currentRepDegree = "0";
+        // Peer that sends the putchunk message needs to set the current rep of that chunk to 0
+        if(this.id == Integer.parseInt(senderId)) currentRepDegree = "0";
+        // Peer that receives the putchunk message neds to set the current rep of that chunk to 1
         else currentRepDegree = "1";
 
         String desiredRepDegree = message.getHeader().getReplicationDeg();
 
-        if(this.storedChunkHistory.get(senderId) == null) {
-
-            if(!sender)
-                this.storedChunkHistory.put(senderId, senderId);
+        if(this.storedChunkHistory.get(senderId + "_" + chunkId) == null) {
+            if(this.id != Integer.parseInt(senderId)) {
+                this.storedChunkHistory.put(senderId + "_" + chunkId, senderId);
+            }
 
             if(this.repDegreeInfo.get(chunkId) != null) {
-                currentRepDegree = Integer.toString(Integer.parseInt(getRepDegreeInfo(fileId, chunkNo, true) + 1));
+                currentRepDegree = Integer.toString(Integer.parseInt(getRepDegreeInfo(fileId, chunkNo, true)) + 1);
                 desiredRepDegree = getRepDegreeInfo(fileId, chunkNo, false);
-                System.out.println("Desired rep degree = " + desiredRepDegree);
             }
-            this.repDegreeInfo.put(chunkId, currentRepDegree + "_" + desiredRepDegree);
+
+            if((currentRepDegree.equals("0") || this.id != Integer.parseInt(senderId)) && desiredRepDegree != null)
+                this.repDegreeInfo.put(chunkId, currentRepDegree + "_" + desiredRepDegree);
             saveProperties();
         }
+
     }
 
     public void printMap(ConcurrentHashMap<String, String> map){
@@ -351,11 +353,15 @@ public class Peer implements PeerInterface{
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt" ,1);
+            peer1.backup( FILE_STORAGE_PATH + "/1/" + "image.png" , 2);
         }
-        else {
+        else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+        }
+        else{
+            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';
+            Peer peer3 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
         }
     }
 }

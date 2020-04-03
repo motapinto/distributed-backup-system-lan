@@ -66,7 +66,7 @@ public class Message {
      */
     public Message(DatagramPacket packet) {
         try {
-            this.parseMessage(packet.getData());
+            this.parseMessage(packet.getData(), packet.getLength());
         } catch (IOException e) {
             Logs.logError("Error parsing message");
             e.printStackTrace();
@@ -80,7 +80,7 @@ public class Message {
      */
     public Message(byte[] message) {
         try {
-            this.parseMessage(message);
+            this.parseMessage(message, message.length);
         } catch (IOException e) {
             Logs.logError("Error parsing message");
             e.printStackTrace();
@@ -92,7 +92,7 @@ public class Message {
      *
      * @param bytes : array of bytes
      */
-    private void parseMessage(byte[] bytes) throws IOException {
+    private void parseMessage(byte[] bytes, int packetLength) throws IOException {
         String[] message = (new String(bytes)).split(CRLF + CRLF);
         int headerSize = message[0].length();
 
@@ -103,8 +103,7 @@ public class Message {
         switch(header[1]) {
             case PUTCHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5]);
-
-                this.body = new byte[bytes.length - this.header.toString().length()];
+                this.body = new byte[packetLength - this.header.toString().length()];
                 ByteArrayInputStream putchunkInputStream = new ByteArrayInputStream(bytes);
                 putchunkInputStream.skip(headerSize + 4);
                 putchunkInputStream.read(this.body);

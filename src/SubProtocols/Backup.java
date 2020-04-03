@@ -1,13 +1,12 @@
 package SubProtocols;
 
-import Common.Logs;
-import Common.Utilities;
 import Peer.Peer;
 import Message.*;
-import java.io.*;
-import java.sql.SQLOutput;
-
+import Common.*;
+import Common.Utilities;
 import static Common.Constants.*;
+
+import java.io.*;
 
 public class Backup {
     private Peer peer;
@@ -47,24 +46,23 @@ public class Backup {
         if(this.peer.getAvailableStorage() < message.getBody().length) return;
 
         this.peer.incrementRepDegreeInfo(message);
-        this.sendStoredMessage(message);
 
+        this.sendStoredMessage(message);
 
         String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getSenderId() + "/" +
                 message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
 
         File out = new File(pathName);
+
         // If the chunk is already stored then it does not make anything else
-        if(out.exists()){
-            return;
-        }
+        if(out.exists()) return;
+
         // If the directory Storage/SenderId/FileId does not exist creates it
         if(!out.getParentFile().exists()) out.getParentFile().mkdirs();
 
         // Writes chunk into file
         try {
             out.createNewFile();
-
             FileOutputStream fos = new FileOutputStream(pathName);
             fos.write(message.getBody());
             fos.close();
@@ -72,13 +70,8 @@ public class Backup {
             e.printStackTrace();
         }
 
-
-
         // Updates current system memory of the peer
         this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
-
-        // Updates replication degree of the chunk - DOES NOT WORK
-
     }
 
     /**
@@ -92,10 +85,8 @@ public class Backup {
             e.printStackTrace();
         }
 
-
         Message reply = new Message(STORED, this.peer.getVersion(), Integer.toString(this.peer.getId()),
                 message.getHeader().getFileId(), message.getHeader().getChuckNo());
-
 
         Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
         this.peer.getSenderExecutor().submit(dispatcher);
@@ -111,12 +102,15 @@ public class Backup {
         InputStream inputFile = new FileInputStream(file.getAbsolutePath());
 
         int numNecessaryChunks =(int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
+
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {
             Logs.logError("File can only have  ");
             return;
         }
+
         byte[] chunk;
         int bytesRead;
+
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
             chunk = new byte[MAX_CHUNK_SIZE];
             bytesRead = inputFile.read(chunk);
@@ -151,7 +145,6 @@ public class Backup {
         String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
         int repDeg =  Integer.parseInt(repDegString);
 
-
         for(int tries = 1; repDeg < this.desiredRepDeg && tries <= 5; tries++, sleepTime *= 2) {
 
             this.peer.getSenderExecutor().submit(dispatcher);
@@ -165,9 +158,5 @@ public class Backup {
             repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
             repDeg =  Integer.parseInt(repDegString);
         }
-    }
-
-    public String getFileId() {
-        return fileId;
     }
 }

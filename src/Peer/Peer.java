@@ -50,6 +50,8 @@ public class Peer implements PeerInterface{
 
     /**
      * String : "senderId_fileId_chuckNo"   |   String : "senderId"
+     * senderId from the key: senderId that send STORED message
+     * senderId from the value: senderId that receives STORED message
      */
     private ConcurrentHashMap<String, String> storedChunkHistory = new ConcurrentHashMap<>();
 
@@ -99,7 +101,6 @@ public class Peer implements PeerInterface{
         }
 
         this.currentSystemMemory = Integer.parseInt(diskProperties.getProperty("used"));
-
     }
 
 
@@ -129,9 +130,9 @@ public class Peer implements PeerInterface{
      */
     private void createProtocols() {
         this.backup = new Backup(this);
-        this.delete = new Delete(this); /*
-        this.restore = new Restore();
-        this.reclaim = new SpaceReclaim();*/
+        this.delete = new Delete(this);
+        /*this.restore = new Restore(this);
+        this.reclaim = new SpaceReclaim(this);*/
     }
 
     /**

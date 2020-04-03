@@ -23,8 +23,8 @@ public class Delete {
      * @param pathname      : pathname to the file
      */
     public Delete(Peer peer, String pathname) {
-        this.pathName = pathname;
         this.peer = peer;
+        this.pathName = pathname;
     }
 
     /**

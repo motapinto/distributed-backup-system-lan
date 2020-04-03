@@ -15,6 +15,7 @@ public class Message {
     private Header header;
     byte[] body;
 
+
     /**
      * Constructs Message for PUTCHUNKS messages
      * <MessageType> <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF>
@@ -92,8 +93,6 @@ public class Message {
      * @param bytes : array of bytes
      */
     private void parseMessage(byte[] bytes) throws IOException {
-
-        System.out.println(new String(bytes));
         String[] message = (new String(bytes)).split(CRLF + CRLF);
         int headerSize = message[0].length();
 
@@ -105,19 +104,16 @@ public class Message {
             case PUTCHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5]);
 
-                this.body = new byte[bytes.length - this.header.toString().length() - 4];
+                this.body = new byte[bytes.length - this.header.toString().length()];
                 ByteArrayInputStream putchunkInputStream = new ByteArrayInputStream(bytes);
                 putchunkInputStream.skip(headerSize + 4);
                 putchunkInputStream.read(this.body);
-
-                System.out.println("HEADER : " + this.header.toString());
-
                 break;
 
             case CHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4]);
 
-                this.body = new byte[bytes.length - this.header.toString().length() - 4];
+                this.body = new byte[bytes.length - this.header.toString().length()];
                 ByteArrayInputStream chunkInputStream = new ByteArrayInputStream(bytes);
                 chunkInputStream.skip(headerSize + 4);
                 chunkInputStream.read(this.body);
@@ -143,7 +139,7 @@ public class Message {
     public String toString() {
         String header = this.header.toString();
         String body = new String(this.body);
-        return(this.body == null) ? header : header + CRLF + CRLF + body;
+        return(this.body == null) ? header : header + body;
     }
 
     public String printBodyHex(){
@@ -158,7 +154,18 @@ public class Message {
     }
 
     public byte[] toBytes() {
-        return this.toString().getBytes();
+        byte[] messageHeaderBytes = this.header.toString().getBytes();
+        byte[] messageBytes;
+
+        if(this.header.getMessageType().equals("PUTCHUNK") || this.header.getMessageType().equals("CHUNK")){
+            messageBytes = new byte[messageHeaderBytes.length + this.body.length];
+            System.arraycopy(messageHeaderBytes, 0, messageBytes, 0, messageHeaderBytes.length);
+            System.arraycopy(this.body, 0, messageBytes, messageHeaderBytes.length, this.body.length);
+        } else {
+            messageBytes = new byte[messageHeaderBytes.length];
+            System.arraycopy(messageHeaderBytes, 0, messageBytes, 0, messageHeaderBytes.length);
+        }
+        return messageBytes;
     }
 
     public Header getHeader() {

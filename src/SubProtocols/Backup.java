@@ -5,6 +5,7 @@ import Common.Utilities;
 import Peer.Peer;
 import Message.*;
 import java.io.*;
+import java.sql.SQLOutput;
 
 import static Common.Constants.*;
 
@@ -55,9 +56,6 @@ public class Backup {
         if(out.exists()){
             return;
         }
-
-        System.out.println(pathName);
-
         // If the directory Storage/SenderId/FileId does not exist creates it
         if(!out.getParentFile().exists()) out.getParentFile().mkdirs();
 
@@ -66,6 +64,7 @@ public class Backup {
             out.createNewFile();
 
             FileOutputStream fos = new FileOutputStream(pathName);
+            System.out.println(message.getBody().length);
             fos.write(message.getBody());
             fos.close();
         } catch (IOException e) {
@@ -94,7 +93,6 @@ public class Backup {
             e.printStackTrace();
         }
 
-        System.out.println(message.getHeader().toString());
 
         Message reply = new Message(STORED, this.peer.getVersion(), Integer.toString(this.peer.getId()),
                 message.getHeader().getFileId(), message.getHeader().getChuckNo());
@@ -112,16 +110,29 @@ public class Backup {
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
         InputStream inputFile = new FileInputStream(file.getAbsolutePath());
 
-        int numNecessaryChunks = (int)Math.ceil(file.length() / MAX_CHUNK_SIZE);
+        System.out.println((double)file.length() /MAX_CHUNK_SIZE);
+        int numNecessaryChunks =(int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
+        System.out.println(file.length());
+        System.out.println("necessary chunks :" + numNecessaryChunks);
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {
             Logs.logError("File can only have  ");
             return;
         }
         byte[] chunk;
+        int bytesRead;
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
             chunk = new byte[MAX_CHUNK_SIZE];
-            inputFile.read(chunk);
-            this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
+            bytesRead = inputFile.read(chunk);
+
+            if(chuckNo == numNecessaryChunks - 1 && bytesRead < MAX_CHUNK_SIZE) {
+                byte[] tmp = new byte[bytesRead];
+                System.out.println("BYTES READ LAST CHUNK" + bytesRead);
+                System.arraycopy(chunk, 0, tmp, 0, bytesRead);
+                this.sendPutChunkMessage(tmp, chuckNo, this.fileId);
+            }
+            else
+                this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
+
         }
 
         inputFile.close();
@@ -138,9 +149,6 @@ public class Backup {
                 fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
 
         this.peer.incrementRepDegreeInfo(request, true);
-
-        System.out.println(request.toString());
-
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
 
         int repDeg = 0;

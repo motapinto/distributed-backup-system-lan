@@ -32,6 +32,7 @@ public class Dispatcher implements Runnable{
         this.peer = peer;
         this.message = new Message(packet);
         this.type = MessageType.RECEIVER;
+
     }
 
     /**
@@ -56,9 +57,8 @@ public class Dispatcher implements Runnable{
             case RECEIVER:
                 this.receiveMessage();
                 break;
-
             case SENDER:
-                this.sendMessageToChannel(this.message);
+                this.sendMessageToChannel();
                 break;
 
             default:
@@ -71,6 +71,8 @@ public class Dispatcher implements Runnable{
      */
     public void receiveMessage() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
+        System.out.println("Received:");
+        System.out.println(this.message.getHeader().toString());
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
                 this.peer.getBackup().startStoredProcedure(message);
@@ -89,15 +91,18 @@ public class Dispatcher implements Runnable{
     /**
      * Delivers a message to a channel
      *
-     * @param message : message to be sent
      */
-    public void sendMessageToChannel(Message message) {
+    public void sendMessageToChannel() {
         DatagramPacket packet;
         DatagramSocket socket;
 
+        System.out.println("Sending:");
+        System.out.println(this.message.getHeader().toString());
+
+
         try {
             socket = new DatagramSocket();
-            byte[] buf = message.toBytes();
+            byte[] buf = this.message.toBytes();
             packet = new DatagramPacket(buf, buf.length, InetAddress.getByName(this.address), this.port);
             socket.send(packet);
         } catch (IOException e) {

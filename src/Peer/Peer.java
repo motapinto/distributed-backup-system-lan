@@ -190,12 +190,7 @@ public class Peer implements PeerInterface{
 
     /** Returns desired/current replication degree for a pair (fileId, chuckNo) */
     public String getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
-
-
-        System.out.println("Entrei no getRepDegree");
         String chunkId = fileId + "_" + chunkNo;
-        printMap(this.repDegreeInfo);
-        System.out.println("chuckId: " + chunkId);
         int index;
         if(getCurrent) index = 0;
         else index = 1;
@@ -215,11 +210,15 @@ public class Peer implements PeerInterface{
      * @param message PUTCHUNK message that came from the peer that wants this peer to store the chunk
      */
     public void incrementRepDegreeInfo(Message message, boolean sender) {
-        System.out.println("INCREMENT REP DEG");
+        //System.out.println("INCREMENT REP DEG");
         String fileId = message.getHeader().getFileId();
         String chunkNo = message.getHeader().getChuckNo();
         String chunkId = fileId + "_" + chunkNo;
         String senderId = message.getHeader().getSenderId() + "_" + chunkId;
+
+
+
+        printMap(this.repDegreeInfo);
 
         String currentRepDegree;
         String desiredRepDegree;
@@ -233,10 +232,12 @@ public class Peer implements PeerInterface{
         desiredRepDegree = message.getHeader().getReplicationDeg();
 
         if(this.storedChunkHistory.get(senderId) == null) {
-            this.storedChunkHistory.put(senderId, senderId);
+
+            if(!sender)
+                this.storedChunkHistory.put(senderId, senderId);
 
             if(this.repDegreeInfo.get(chunkId) != null) {
-                currentRepDegree = getRepDegreeInfo(fileId, chunkNo, true) + 1;
+                currentRepDegree = Integer.toString(Integer.parseInt(getRepDegreeInfo(fileId, chunkNo, true) + 1));
                 desiredRepDegree = getRepDegreeInfo(fileId, chunkNo, false);
                 System.out.println("Desired rep degree = " + desiredRepDegree);
             }

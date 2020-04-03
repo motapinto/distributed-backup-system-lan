@@ -1,5 +1,7 @@
 package Message;
 
+import static Common.Constants.CRLF;
+
 public class Header {
     private String chunkNo;
     private final String version;
@@ -78,6 +80,8 @@ public class Header {
         if(this.replicationDeg != null) {
             header += " " + this.replicationDeg;
         }
+
+        header += " " + CRLF + CRLF;
 
         return header;
     }

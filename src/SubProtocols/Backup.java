@@ -46,7 +46,9 @@ public class Backup {
 
         if(this.peer.getAvailableStorage() < message.getBody().length) return;
 
+        this.peer.incrementRepDegreeInfo(message);
         this.sendStoredMessage(message);
+
 
         String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getSenderId() + "/" +
                 message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
@@ -77,8 +79,6 @@ public class Backup {
 
         // Updates replication degree of the chunk - DOES NOT WORK
 
-        this.peer.incrementRepDegreeInfo(message);
-
     }
 
     /**
@@ -95,6 +95,7 @@ public class Backup {
 
         Message reply = new Message(STORED, this.peer.getVersion(), Integer.toString(this.peer.getId()),
                 message.getHeader().getFileId(), message.getHeader().getChuckNo());
+
 
         Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
         this.peer.getSenderExecutor().submit(dispatcher);

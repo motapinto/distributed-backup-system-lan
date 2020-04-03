@@ -231,8 +231,14 @@ public class Peer implements PeerInterface{
 
         if(this.storedChunkHistory.get(senderId + "_" + chunkId) == null) {
             if(this.id != Integer.parseInt(senderId)) {
-                this.storedChunkHistory.put(senderId + "_" + chunkId, senderId);
+                if (message.getHeader().getMessageType().equals("PUTCHUNK")) {
+                    this.storedChunkHistory.put(this.id + "_" + chunkId, senderId);
+                } else {
+                    this.storedChunkHistory.put(senderId + "_" + chunkId, senderId);
+                }
             }
+
+
 
             if(this.repDegreeInfo.get(chunkId) != null) {
                 currentRepDegree = Integer.toString(Integer.parseInt(getRepDegreeInfo(fileId, chunkNo, true)) + 1);

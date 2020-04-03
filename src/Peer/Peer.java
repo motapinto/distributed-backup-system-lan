@@ -126,7 +126,7 @@ public class Peer implements PeerInterface{
      */
     private void createProtocols() {
         this.backup = new Backup(this);
-        /*this.delete = new Delete();
+        this.delete = new Delete(this); /*
         this.restore = new Restore();
         this.reclaim = new SpaceReclaim();*/
     }
@@ -154,7 +154,7 @@ public class Peer implements PeerInterface{
      * A .properties file is a simple collection of KEY-VALUE pairs that can be parsed by the java.util.Properties class.
      * https://mkyong.com/java/java-properties-file-examples/
      */
-    private void saveMap(String path, ConcurrentHashMap map) {
+    public void saveMap(String path, ConcurrentHashMap map) {
         Properties properties = new Properties();
         properties.putAll(map);
         try {

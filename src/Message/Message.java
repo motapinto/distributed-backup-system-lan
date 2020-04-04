@@ -33,7 +33,7 @@ public class Message {
     }
 
     /**
-     * Constructs Message for CHUNK, GETCHUNK and STORED messages
+     * Constructs Message for STORED, REMOVED, CHUNK, and GETCHUNK messages
      * <MessageType> <Version> <SenderId> <FileId> <ChunkNo><CRLF>
      *
      * @param messageType indicates message type

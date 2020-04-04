@@ -36,6 +36,9 @@ public class Delete {
         this.pathName = pathname;
     }
 
+    /**
+     * Starts the restore protocol
+     */
     public void startDeleteProcedure() {
         this.setFileId();
         this.sendDeleteMessage();

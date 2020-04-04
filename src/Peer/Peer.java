@@ -233,30 +233,31 @@ public class Peer implements PeerInterface{
      *
      * @param message PUTCHUNK message that came from the peer that wants this peer to store the chunk
      */
-    public void incrementRepDegreeInfo(Message message) {
+    public void updateRepDegreeInfo(Message message, boolean increment) {
 
         String fileId = message.getHeader().getFileId();
         String chunkNo = message.getHeader().getChuckNo();
         String chunkId = fileId + "_" + chunkNo;
         String senderId = message.getHeader().getSenderId();
         String storedMessageHistoryId = senderId + "_" + chunkId;
-        String storedChunkHistoryId = this.id + "_" + chunkId;
 
+        int value = 1;
+        if(!increment)  value = -1;
 
-        String desiredRepDegree;
-        String currentRepDegree;
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null && this.repDegreeInfo.get(chunkId) != null){
             this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-            currentRepDegree = Integer.toString(Integer.parseInt(this.getRepDegreeInfo(fileId, chunkNo, true)) + 1);
-            desiredRepDegree = this.getRepDegreeInfo(fileId, chunkNo, false);
+            String currentRepDegree = Integer.toString(Integer.parseInt(this.getRepDegreeInfo(fileId, chunkNo, true)) + value);
+            String desiredRepDegree = this.getRepDegreeInfo(fileId, chunkNo, false);
             this.repDegreeInfo.put(chunkId, currentRepDegree + "_" + desiredRepDegree);
             this.saveProperties();
         }
 
+        if(!increment) {
+            this.storedChunkHistory.remove(chunkId);
+        }
     }
 
     public void initiateRepDegreeInfo(Message message){
-
         String fileId = message.getHeader().getFileId();
         String senderId = message.getHeader().getSenderId();
         String chunkNo = message.getHeader().getChuckNo();
@@ -383,11 +384,13 @@ public class Peer implements PeerInterface{
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.restore( FILE_STORAGE_PATH + "/1/" + "Teste.txt");
+            //peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 1);
+            //peer1.delete( FILE_STORAGE_PATH + "/1/" + "teste.jpg");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            peer2.reclaim( 100);
         }
         else{
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';

@@ -172,4 +172,12 @@ public class Backup {
         Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
         this.peer.getSenderExecutor().submit(dispatcher);
     }
+
+    public void setDesiredRepDeg(int desiredRepDeg) {
+        this.desiredRepDeg = desiredRepDeg;
+    }
+
+    public void setFileId(String fileId) {
+        this.fileId = fileId;
+    }
 }

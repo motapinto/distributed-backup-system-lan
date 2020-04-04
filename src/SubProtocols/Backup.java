@@ -36,13 +36,13 @@ public class Backup {
         this.pathName = pathName;
     }
 
+
     /**
      * Splits a file into chunks and for each chunk send a PUTCHUNK message
      */
     public void startPutChunkProcedure() {
         File file = new File(this.pathName);
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
-
         InputStream inputFile = null;
         try {
             inputFile = new FileInputStream(file.getAbsolutePath());
@@ -53,24 +53,33 @@ public class Backup {
         int numNecessaryChunks =(int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
 
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {
-            Logs.logError("File can only have a maximum of 1 million chunks");
+            Logs.logError("File can only have  ");
             return;
         }
 
-        byte[] chunk = new byte[MAX_CHUNK_SIZE];
+        byte[] chunk;
+        int bytesRead = 0;
 
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
-
+            chunk = new byte[MAX_CHUNK_SIZE];
             try {
-                inputFile.readNBytes(chunk, 0, MAX_CHUNK_SIZE);
+                assert inputFile != null;
+                bytesRead = inputFile.read(chunk);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
+            if(chuckNo == numNecessaryChunks - 1 && bytesRead < MAX_CHUNK_SIZE) {
+                byte[] tmp = new byte[bytesRead];
+                System.arraycopy(chunk, 0, tmp, 0, bytesRead); // meter readNBytes!!!!
+                this.sendPutChunkMessage(tmp, chuckNo, this.fileId);
+            }
+            else
+                this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
         }
 
         try {
+            assert inputFile != null;
             inputFile.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -87,7 +96,7 @@ public class Backup {
         Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()),
                 fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
 
-        this.peer.incrementRepDegreeInfo(request);
+        this.peer.initiateRepDegreeInfo(request);
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
 
         int sleepTime = 1000;
@@ -118,7 +127,7 @@ public class Backup {
 
         if(this.peer.getAvailableStorage() < message.getBody().length) return;
 
-        this.peer.incrementRepDegreeInfo(message);
+        this.peer.initiateRepDegreeInfo(message);
         this.sendStoredMessage(message);
 
         String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getSenderId() + "/" +

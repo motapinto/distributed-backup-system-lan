@@ -28,4 +28,18 @@ public class Restore {
     }
 
 
+    public void startRestoreFileProcedure(String pathname){
+
+
+    }
+
+    public void startGetChunkProcedure(){
+
+    }
+
+    public void startChunkProcedure(){
+
+    }
+
+
 }

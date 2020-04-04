@@ -15,6 +15,16 @@ public class Backup {
     private String fileId;
 
     /**
+     * Creates backup protocol
+     *
+     * @param peer : peer that creates backup protocol
+     */
+    public Backup(Peer peer){
+        this.peer = peer;
+        this.pathName = null;
+    }
+
+    /**
      * Responsible for backing up a file
      *
      * @param peer          : peer listening to the multicast
@@ -24,16 +34,6 @@ public class Backup {
         this.peer = peer;
         this.desiredRepDeg = desiredRepDeg;
         this.pathName = pathName;
-    }
-
-    /**
-     * Creates backup protocol
-     *
-     * @param peer : peer that creates backup protocol
-     */
-    public Backup(Peer peer){
-        this.peer = peer;
-        this.pathName = null;
     }
 
     /**

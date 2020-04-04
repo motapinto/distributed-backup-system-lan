@@ -17,6 +17,15 @@ public class Delete {
     private String fileId;
 
     /**
+     * Creates delete protocol
+     *
+     * @param peer : peer that creates delete protocol
+     */
+    public Delete(Peer peer) {
+        this.peer = peer;
+    }
+
+    /**
      * Responsible for deleting a file
      *
      * @param peer          : peer listening to the multicast
@@ -25,15 +34,6 @@ public class Delete {
     public Delete(Peer peer, String pathname) {
         this.peer = peer;
         this.pathName = pathname;
-    }
-
-    /**
-     * Creates delete protocol
-     *
-     * @param peer : peer that creates delete protocol
-     */
-    public Delete(Peer peer) {
-        this.peer = peer;
     }
 
     public void startDeleteProcedure() {

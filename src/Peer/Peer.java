@@ -204,7 +204,10 @@ public class Peer implements PeerInterface{
         this.delete.startDeleteProcedure();
     }
 
-    public void reclaim(int maxDiskSpace) {}
+    public void reclaim(int sizeToReclaim) {
+        this.reclaim = new SpaceReclaim(this, sizeToReclaim);
+        //this.reclaim.startSpaceReclaimProcedure();
+    }
 
     /** Returns desired/current replication degree for a pair (fileId, chuckNo) */
     public String getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
@@ -276,7 +279,6 @@ public class Peer implements PeerInterface{
         Peer c = (Peer)o;
         return c.getId() == this.id;
     }
-
 
     public int getAvailableStorage() {
         return MAX_SIZE -  this.currentSystemMemory;

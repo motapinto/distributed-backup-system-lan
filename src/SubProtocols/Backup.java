@@ -39,35 +39,42 @@ public class Backup {
     /**
      * Splits a file into chunks and for each chunk send a PUTCHUNK message
      */
-    public void startPutChunkProcedure() throws IOException {
+    public void startPutChunkProcedure() {
         File file = new File(this.pathName);
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
-        InputStream inputFile = new FileInputStream(file.getAbsolutePath());
+
+        InputStream inputFile = null;
+        try {
+            inputFile = new FileInputStream(file.getAbsolutePath());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
         int numNecessaryChunks =(int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
 
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {
-            Logs.logError("File can only have  ");
+            Logs.logError("File can only have a maximum of 1 million chunks");
             return;
         }
 
-        byte[] chunk;
-        int bytesRead;
+        byte[] chunk = new byte[MAX_CHUNK_SIZE];
 
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
-            chunk = new byte[MAX_CHUNK_SIZE];
-            bytesRead = inputFile.read(chunk);
 
-            if(chuckNo == numNecessaryChunks - 1 && bytesRead < MAX_CHUNK_SIZE) {
-                byte[] tmp = new byte[bytesRead];
-                System.arraycopy(chunk, 0, tmp, 0, bytesRead); // meter readNBytes!!!!
-                this.sendPutChunkMessage(tmp, chuckNo, this.fileId);
+            try {
+                inputFile.readNBytes(chunk, 0, MAX_CHUNK_SIZE);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            else
-                this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
+
+            this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
         }
 
-        inputFile.close();
+        try {
+            inputFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

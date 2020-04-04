@@ -83,7 +83,7 @@ public class Peer implements PeerInterface{
     /**
      * Reads all properties files
      */
-    private void readProperties() throws IOException {
+    private void readProperties() {
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
         readMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
 
@@ -92,7 +92,9 @@ public class Peer implements PeerInterface{
 
         if (!diskInfo.exists()) {
             this.setCurrentSystemMemory(0);
+            return;
         }
+
         Properties diskProperties = new Properties();
         try {
             diskProperties.load(new FileInputStream(DISK_INFO_PATH));
@@ -103,7 +105,9 @@ public class Peer implements PeerInterface{
         this.currentSystemMemory = Integer.parseInt(diskProperties.getProperty("used"));
     }
 
-
+    /**
+     * Comment...
+     */
     private void setupExecutors(){
         this.senderExecutor = Executors.newFixedThreadPool(5);
         this.deliverExecutor = Executors.newFixedThreadPool(11);
@@ -112,14 +116,16 @@ public class Peer implements PeerInterface{
 
     /**
      * Create all 3 channels and starts listening to them
+     *
+     * @param mcAddress : address of the control chanel
+     * @param mdbAddress : address of the backup chanel
+     * @param mdrAddress : address of the restore chanel
      */
     private void setupChannels(String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
-        // Creates channels
         this.controlChannel = new MC(this, mcAddress[0], Integer.parseInt(mcAddress[1]));
         this.backupChannel = new MDB(this, mdbAddress[0], Integer.parseInt(mdbAddress[1]));
         this.restoreChannel = new MDR(this, mdrAddress[0], Integer.parseInt(mdrAddress[1]));
 
-        // Starts each channel thread and starts listening
         new Thread(this.controlChannel).start();
         new Thread(this.backupChannel).start();
         new Thread(this.restoreChannel).start();
@@ -131,8 +137,8 @@ public class Peer implements PeerInterface{
     private void createProtocols() {
         this.backup = new Backup(this);
         this.delete = new Delete(this);
-        /*this.restore = new Restore(this);
-        this.reclaim = new SpaceReclaim(this);*/
+        this.restore = new Restore(this);
+        this.reclaim = new SpaceReclaim(this);
     }
 
     /**
@@ -177,7 +183,12 @@ public class Peer implements PeerInterface{
         saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
     }
 
-    public void backup(String pathName, int replicationDegree) throws IOException {
+    /**
+     * Client interface for executing backup protocol
+     * @param pathName : path name of the file to be backed up
+     * @param replicationDegree : desired replication degree for the file
+     */
+    public void backup(String pathName, int replicationDegree) {
         if(replicationDegree > MAX_REPLICATION_DEGREE) {
             Logs.logError("Maximum replication Degree reached!");
             return;
@@ -358,7 +369,7 @@ public class Peer implements PeerInterface{
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.delete( FILE_STORAGE_PATH + "/1/" + "Teste.txt");
+            peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 1);
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';

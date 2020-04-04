@@ -174,4 +174,8 @@ public class Message {
     public byte[] getBody() {
         return this.body;
     }
+
+    public void setBody(byte[] data) {
+        this.body = data;
+    }
 }

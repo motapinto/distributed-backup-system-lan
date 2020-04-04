@@ -39,7 +39,7 @@ public class Delete {
     public void startDeleteProcedure() {
         this.setFileId();
         this.sendDeleteMessage();
-        this.deleteFile(this.peer, this.fileId);
+        this.deleteFile(this.peer.getId(), this.fileId);
     }
 
     /**
@@ -55,7 +55,6 @@ public class Delete {
      */
     public void sendDeleteMessage() {
         Message request = new Message(DELETE, this.peer.getVersion(), Integer.toString(this.peer.getId()), this.fileId);
-
         // 5 tries to make sure the message gets to all peers
         for(int i = 0; i < 5; i++) {
             Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
@@ -67,7 +66,7 @@ public class Delete {
      * Deletes all chunks from a file if original copy or removes entirely the original copy of the file
      * depending on the received peer
      */
-    public void deleteFile(Peer peer, String fileId) {
+    public void deleteFile(int peerId, String fileId) {
 
         ConcurrentHashMap<String, String> repDegreeInfo = peer.getRepDegreeInfo();
         ConcurrentHashMap<String, String> storedHistory = peer.getStoredChunkHistory();
@@ -90,13 +89,17 @@ public class Delete {
             }
         }
 
-        if(!this.peer.equals(peer)) {
-            File folder = new File(Peer.FILE_STORAGE_PATH + "/" + fileId);
+        if(this.peer.getId() != peerId) {
+            File folder = new File(Peer.FILE_STORAGE_PATH + "/" + peerId + "/" + fileId);
+
             File[] files = folder.listFiles();
             for(File file : files) {
-                this.peer.setCurrentSystemMemory(peer.getCurrentSystemMemory() - (int)file.length());
+                System.out.println("peer: " +  this.peer.getId() + "  current memory: " + this.peer.getCurrentSystemMemory() + "  chunk size " + (int)file.length());
+                this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() - (int)file.length());
                 file.delete();
+                System.out.println("length: " + file.length());
             }
+            folder.delete();
         }
     }
 }

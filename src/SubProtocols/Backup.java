@@ -37,66 +37,9 @@ public class Backup {
     }
 
     /**
-     * Stores the chunk and sends a STORED message, if the peer has enough memory and does not have that chunk
-     *
-     * @param message : PUTCHUNK message
-     */
-    public void startStoredProcedure(Message message) {
-
-        if(this.peer.getAvailableStorage() < message.getBody().length) return;
-
-        this.peer.incrementRepDegreeInfo(message);
-
-        this.sendStoredMessage(message);
-
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getSenderId() + "/" +
-                message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
-
-        File out = new File(pathName);
-
-        // If the chunk is already stored then it does not make anything else
-        if(out.exists()) return;
-
-        // If the directory Storage/SenderId/FileId does not exist creates it
-        if(!out.getParentFile().exists()) out.getParentFile().mkdirs();
-
-        // Writes chunk into file
-        try {
-            out.createNewFile();
-            FileOutputStream fos = new FileOutputStream(pathName);
-            fos.write(message.getBody());
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Updates current system memory of the peer
-        this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
-    }
-
-    /**
-     * Sends STORED message for a chunk
-     * @param message : message with request
-     */
-    public void sendStoredMessage(Message message) {
-        try {
-            Thread.sleep((long)Math.random() * 400);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        Message reply = new Message(STORED, this.peer.getVersion(), Integer.toString(this.peer.getId()),
-                message.getHeader().getFileId(), message.getHeader().getChuckNo());
-
-        Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
-        this.peer.getSenderExecutor().submit(dispatcher);
-    }
-
-    /**
      * Splits a file into chunks and for each chunk send a PUTCHUNK message
      */
-    public void startPutchunkProcedure() throws IOException {
-
+    public void startPutChunkProcedure() throws IOException {
         File file = new File(this.pathName);
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
         InputStream inputFile = new FileInputStream(file.getAbsolutePath());
@@ -117,12 +60,11 @@ public class Backup {
 
             if(chuckNo == numNecessaryChunks - 1 && bytesRead < MAX_CHUNK_SIZE) {
                 byte[] tmp = new byte[bytesRead];
-                System.arraycopy(chunk, 0, tmp, 0, bytesRead);
+                System.arraycopy(chunk, 0, tmp, 0, bytesRead); // meter readNBytes!!!!
                 this.sendPutChunkMessage(tmp, chuckNo, this.fileId);
             }
             else
                 this.sendPutChunkMessage(chunk, chuckNo, this.fileId);
-
         }
 
         inputFile.close();
@@ -158,5 +100,60 @@ public class Backup {
             repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
             repDeg =  Integer.parseInt(repDegString);
         }
+    }
+
+    /**
+     * Stores the chunk and sends a STORED message, if the peer has enough memory and does not have that chunk
+     *
+     * @param message : PUTCHUNK message
+     */
+    public void startStoredProcedure(Message message) {
+
+        if(this.peer.getAvailableStorage() < message.getBody().length) return;
+
+        this.peer.incrementRepDegreeInfo(message);
+        this.sendStoredMessage(message);
+
+        String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getSenderId() + "/" +
+                message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
+
+        File out = new File(pathName);
+
+        // If the chunk is already stored then it does not make anything else
+        if(out.exists())
+            return;
+
+        if(!out.getParentFile().exists())
+            out.getParentFile().mkdirs();
+
+        try {
+            out.createNewFile();
+            FileOutputStream fos = new FileOutputStream(pathName);
+            fos.write(message.getBody());
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Updates current system memory of the peer
+        this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
+    }
+
+    /**
+     * Sends STORED message for a chunk
+     * @param message : message with request
+     */
+    public void sendStoredMessage(Message message) {
+        try {
+            Thread.sleep((long)Math.random() * 400);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Message reply = new Message(STORED, this.peer.getVersion(), Integer.toString(this.peer.getId()),
+                message.getHeader().getFileId(), message.getHeader().getChuckNo());
+
+        Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
+        this.peer.getSenderExecutor().submit(dispatcher);
     }
 }

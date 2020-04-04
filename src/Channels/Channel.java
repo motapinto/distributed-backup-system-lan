@@ -58,8 +58,7 @@ public class Channel implements Runnable {
             try {
                 DatagramPacket received = this.receive();
                 Dispatcher handler = new Dispatcher(this.peer, received);
-                peer.getReceiverExecutor().submit(handler);
-
+                this.peer.getReceiverExecutor().submit(handler);
             } catch (IOException e) {
                 Logs.logError("Error handling peer" + e);
             }

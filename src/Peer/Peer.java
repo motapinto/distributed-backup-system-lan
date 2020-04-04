@@ -183,7 +183,7 @@ public class Peer implements PeerInterface{
             return;
         }
         this.backup = new Backup(this, pathName, replicationDegree);
-        this.backup.startPutchunkProcedure();
+        this.backup.startPutChunkProcedure();
     }
 
     public void restore(String pathname) {}
@@ -238,8 +238,6 @@ public class Peer implements PeerInterface{
                     this.storedChunkHistory.put(senderId + "_" + chunkId, senderId);
                 }
             }
-
-
 
             if(this.repDegreeInfo.get(chunkId) != null) {
                 currentRepDegree = Integer.toString(Integer.parseInt(getRepDegreeInfo(fileId, chunkNo, true)) + 1);
@@ -360,7 +358,7 @@ public class Peer implements PeerInterface{
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.backup( FILE_STORAGE_PATH + "/1/" + "image.png" , 2);
+            peer1.delete( FILE_STORAGE_PATH + "/1/" + "Teste.txt");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';

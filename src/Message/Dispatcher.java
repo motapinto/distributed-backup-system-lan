@@ -72,8 +72,7 @@ public class Dispatcher implements Runnable{
      */
     public void receiveMessageFromChannel() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
-        System.out.println("Received:");
-        System.out.println(this.message.getHeader().toString());
+        System.out.println("Received: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
                 this.peer.getBackup().startStoredProcedure(message);
@@ -83,7 +82,7 @@ public class Dispatcher implements Runnable{
             case GETCHUNK:
                 break;
             case DELETE:
-                this.peer.getDelete().deleteFile(this.peer, this.message.getHeader().getFileId());
+                this.peer.getDelete().deleteFile(Integer.parseInt(this.message.getHeader().getSenderId()), this.message.getHeader().getFileId());
                 break;
             case REMOVED:
                 break;
@@ -96,10 +95,6 @@ public class Dispatcher implements Runnable{
     public void sendMessageToChannel() {
         DatagramPacket packet;
         DatagramSocket socket;
-
-        System.out.println("Sending:");
-        System.out.println(this.message.getHeader().toString());
-
 
         try {
             socket = new DatagramSocket();

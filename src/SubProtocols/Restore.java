@@ -60,7 +60,9 @@ public class Restore {
         System.out.println("passei daqui 2");
         this.GetChunksProcedure();
 
+        System.out.println("passei daqui 3");
         while(numberDistinctChunksReceived < numberOfChunks){
+            System.out.println("passei daqui 4");
             try {
                 Thread.sleep(3000);
                 if(numberDistinctChunksReceived < numberOfChunks)
@@ -69,7 +71,7 @@ public class Restore {
                 e.printStackTrace();
             }
         }
-        System.out.println("passei daqui 3");
+        System.out.println("passei daqui 5");
         reconstructFile();
     }
 

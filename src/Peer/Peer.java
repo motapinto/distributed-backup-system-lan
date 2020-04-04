@@ -206,7 +206,7 @@ public class Peer implements PeerInterface{
 
     public void reclaim(int sizeToReclaim) {
         this.reclaim = new SpaceReclaim(this, sizeToReclaim);
-        //this.reclaim.startSpaceReclaimProcedure();
+        this.reclaim.startSpaceReclaimProcedure();
     }
 
     /** Returns desired/current replication degree for a pair (fileId, chuckNo) */

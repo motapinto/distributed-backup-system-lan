@@ -2,6 +2,7 @@
 /workspace.xml
 /.idea
 /out
-/storage
+/storage1
+/storage2
 *.class
 

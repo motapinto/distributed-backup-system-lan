@@ -8,8 +8,8 @@ import Message.Message;
 import Message.Dispatcher;
 import Peer.Peer;
 
-import static Common.Constants.MAX_DELAY;
-import static Common.Constants.REMOVED;
+import static Common.Constants.*;
+import static Common.Constants.PUTCHUNK_RETRIES;
 
 public class SpaceReclaim {
 
@@ -71,20 +71,18 @@ public class SpaceReclaim {
 
             // chunkId = fileId + "_" + chunkNo
             String chunkId = rawKey.split("_")[1] + "_" + rawKey.split("_")[2];
+
+            // senderId_fileId_chunkNo
             int peerStorer = Integer.parseInt(rawKey.split("_")[0]);
 
             String currRepDeg = repDegreeInfo.get(chunkId).split("_")[0];
             String desRepDeg = repDegreeInfo.get(chunkId).split("_")[1];
 
             // if current replication degree is greater than the desired replication degree
-            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg))) {
-                System.out.println("delete chunk - first task");
+            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
                 this.deleteChunk(chunkId, entry.getValue());
-            }
-            else if(!firstTask && peerStorer == this.peer.getId()) {
-                System.out.println("delete chunk - second task");
+            else if(!firstTask && peerStorer == this.peer.getId())
                 this.deleteChunk(chunkId, entry.getValue());
-            }
         }
     }
 
@@ -146,18 +144,16 @@ public class SpaceReclaim {
         String desRepDegree = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), false);
         String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
 
+        System.out.println("curr: " + currRepDegree);
+        System.out.println("desired: " + desRepDegree);
+        System.out.println("chunk id: " + chunkId);
+
         ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
 
-        /* String(KEY) : "senderId_fileId_chuckNo"   |   String(VALUE) : "senderId" */
-        for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
-
-            String rawKey = entry.getKey();
-            int peerStorer = Integer.parseInt(rawKey.split("_")[0]);
-            String entryChunkId = rawKey.split("_")[1] + rawKey.split("_")[2];
-
-            // if it has the chunk stored and the currRepDegree is less than the desRepDegree
-            if(peerStorer == this.peer.getId() && entryChunkId.equals(chunkId) && Integer.parseInt(currRepDegree) < Integer.parseInt(desRepDegree))
-                return;//this.startBackup(message, Integer.parseInt(desRepDegree));
+        // if it has the chunk stored and the currRepDegree is less than the desRepDegree
+        if(storedHistory.get(this.peer.getId() + "_" + chunkId) != null &&
+                Integer.parseInt(currRepDegree) < Integer.parseInt(desRepDegree)) {
+            this.startBackup(message, Integer.parseInt(desRepDegree));
         }
     }
 
@@ -174,7 +170,20 @@ public class SpaceReclaim {
             e.printStackTrace();
         }
 
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getSenderId() + "/" +
+        //IF DURING THIS WAIT.....
+
+
+
+        ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
+        String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
+        String originalFileSender;
+
+        if(storedHistory.get(this.peer.getId() + "_" + chunkId) != null)
+            originalFileSender = storedHistory.get(this.peer.getId() + "_" + chunkId);
+        else
+            return;
+
+        String pathName = Peer.FILE_STORAGE_PATH + "/" + originalFileSender + "/" +
                 message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
 
         File file = new File(pathName);
@@ -188,9 +197,10 @@ public class SpaceReclaim {
             e.printStackTrace();
         }
 
-        this.peer.getBackup().setDesiredRepDeg(desiredRepDegree);
-        this.peer.getBackup().setFileId(message.getHeader().getFileId());
-        this.peer.getBackup().sendPutChunkMessage(chunk, Integer.parseInt(message.getHeader().getChuckNo()), message.getHeader().getFileId());
+        //!ALEERT!
+        Backup backup = new Backup(this.peer, pathName, desiredRepDegree);
+        backup.setSenderId(Integer.parseInt(originalFileSender));
+        backup.sendPutChunkMessage(chunk, Integer.parseInt(message.getHeader().getChuckNo()), message.getHeader().getFileId());
     }
 }
 

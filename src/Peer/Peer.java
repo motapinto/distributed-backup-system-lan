@@ -50,8 +50,11 @@ public class Peer implements PeerInterface{
 
     /**
      * String : "senderId_fileId_chuckNo_size"   |   String : "senderId"
-     * senderId from the key: senderId that send STORED message
-     * senderId from the value: senderId that receives STORED message
+     * if senderId(key) == senderId(value) -> received STORED message
+     * else {
+     *      senderId from the key: senderId that send STORED message
+     *      senderId from the value: senderId that receives STORED message
+     *  }
      */
     private ConcurrentHashMap<String, String> storedChunkHistory = new ConcurrentHashMap<>();
 
@@ -237,6 +240,7 @@ public class Peer implements PeerInterface{
     public String getRepDegreeInfo(String fileId, String chunkNo, boolean getCurrent) {
         String chunkId = fileId + "_" + chunkNo;
         int index;
+
         if(getCurrent) index = 0;
         else index = 1;
 
@@ -466,11 +470,11 @@ public class Peer implements PeerInterface{
         else if(args[0].equals("3")){
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';
             Peer peer3 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer3.reclaim(130);
+            //peer3.reclaim(130);
         }
         else {
-            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';
-            Peer peer4 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '4';
+            Peer peer4 = new Peer("1", "4", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
         }
     }
 }

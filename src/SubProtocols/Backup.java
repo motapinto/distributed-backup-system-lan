@@ -13,6 +13,7 @@ public class Backup {
     private int desiredRepDeg;
     private String pathName;
     private String fileId;
+    private int senderId;
 
     /**
      * Creates backup protocol
@@ -21,6 +22,7 @@ public class Backup {
      */
     public Backup(Peer peer){
         this.peer = peer;
+        this.senderId = this.peer.getId();
         this.pathName = null;
     }
 
@@ -32,6 +34,7 @@ public class Backup {
      */
     public Backup(Peer peer, String pathName, int desiredRepDeg){
         this.peer = peer;
+        this.senderId = this.peer.getId();
         this.desiredRepDeg = desiredRepDeg;
         this.pathName = pathName;
     }
@@ -93,7 +96,7 @@ public class Backup {
      * @param fileId  : file id of the file
      */
     public void sendPutChunkMessage(byte[] chunk, int chunkNo, String fileId) {
-        Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()),
+        Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.senderId),
                 fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
 
         this.peer.initiateRepDegreeInfo(request);
@@ -180,6 +183,8 @@ public class Backup {
     public void setFileId(String fileId) {
         this.fileId = fileId;
     }
+
+    public void setSenderId(int senderId) { this.senderId = senderId; }
 
     public String getFileId() {
         return this.fileId;

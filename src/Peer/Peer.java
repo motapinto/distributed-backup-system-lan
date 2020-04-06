@@ -7,7 +7,6 @@ import SubProtocols.*;
 import static Common.Constants.*;
 
 import java.io.*;
-import java.sql.SQLOutput;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,10 +17,10 @@ public class Peer implements PeerInterface{
     private final String version;
     private int id;
     private final String[] serviceAccessPoint;
-    private int currentSystemMemory;
+    private int usedMemory = INITIAL_MAX_MEMORY;
+    private int maxMemory = INITIAL_MAX_MEMORY;
 
-    public static String FILE_STORAGE_PATH = "../storage";
-    public static final int MAX_SIZE = 64000000;
+    public static String FILE_STORAGE_PATH = "storage";
     public String REPLICATION_DEGREE_INFO_PATH;
     public String DISK_INFO_PATH ;
     public String STORED_CHUNK_HISTORY_PATH;
@@ -98,7 +97,8 @@ public class Peer implements PeerInterface{
         File diskInfo = new File(DISK_INFO_PATH);
 
         if (!diskInfo.exists()) {
-            this.setCurrentSystemMemory(0);
+            this.setMaxMemory(INITIAL_MAX_MEMORY);
+            this.setUsedMemory(0);
             return;
         }
 
@@ -109,16 +109,8 @@ public class Peer implements PeerInterface{
             e.printStackTrace();
         }
 
-        this.currentSystemMemory = Integer.parseInt(diskProperties.getProperty("used"));
-    }
-
-    /**
-     * Comment...
-     */
-    private void setupExecutors(){
-        this.senderExecutor = Executors.newFixedThreadPool(5);
-        this.deliverExecutor = Executors.newFixedThreadPool(11);
-        this.receiverExecutor = Executors.newFixedThreadPool(10);
+        this.usedMemory = Integer.parseInt(diskProperties.getProperty("used"));
+        this.maxMemory = Integer.parseInt(diskProperties.getProperty("max"));
     }
 
     /**
@@ -136,6 +128,15 @@ public class Peer implements PeerInterface{
         new Thread(this.controlChannel).start();
         new Thread(this.backupChannel).start();
         new Thread(this.restoreChannel).start();
+    }
+
+    /**
+     * Comment...
+     */
+    private void setupExecutors(){
+        this.senderExecutor = Executors.newFixedThreadPool(5);
+        this.deliverExecutor = Executors.newFixedThreadPool(11);
+        this.receiverExecutor = Executors.newFixedThreadPool(10);
     }
 
     /**
@@ -186,8 +187,8 @@ public class Peer implements PeerInterface{
      */
     private void saveProperties() {
         // Save chunks replication degree info
-        saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
-        saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
+        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+        this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
     }
 
     /**
@@ -261,19 +262,21 @@ public class Peer implements PeerInterface{
         String senderId = message.getHeader().getSenderId();
         String storedMessageHistoryId = senderId + "_" + chunkId;
 
-        int value = 1;
-        if(!increment)  value = -1;
+        if(!increment) {
+            String repDegInf = this.repDegreeInfo.get(chunkId);
+            Integer newValue = Integer.parseInt(repDegInf.split("_")[0]) - 1;
+            this.repDegreeInfo.put(chunkId, newValue + "_" + repDegInf.split("_")[1]);
+            this.storedChunkHistory.remove(storedMessageHistoryId);
+            this.saveProperties();
+            return;
+        }
 
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null && this.repDegreeInfo.get(chunkId) != null){
             this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-            String currentRepDegree = Integer.toString(Integer.parseInt(this.getRepDegreeInfo(fileId, chunkNo, true)) + value);
+            String currentRepDegree = Integer.toString(Integer.parseInt(this.getRepDegreeInfo(fileId, chunkNo, true)) + 1);
             String desiredRepDegree = this.getRepDegreeInfo(fileId, chunkNo, false);
             this.repDegreeInfo.put(chunkId, currentRepDegree + "_" + desiredRepDegree);
             this.saveProperties();
-        }
-
-        if(!increment) {
-            this.storedChunkHistory.remove(chunkId);
         }
     }
 
@@ -298,12 +301,6 @@ public class Peer implements PeerInterface{
         }
     }
 
-    public void printMap(ConcurrentHashMap<String, String> map){
-        for (String key : map.keySet()) {
-            System.out.println(key + " " + map.get(key));
-        }
-    }
-    
     public void state() {
         for(Map.Entry<String, Backup> entry : this.backupInfo.entrySet()) {
             String fileId = entry.getKey();
@@ -333,8 +330,8 @@ public class Peer implements PeerInterface{
         }
 
         System.out.println("Information about peer storage capacity");
-        System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getCurrentSystemMemory() + " KBytes");
-        System.out.println("Amount of storage used to backup the chunks" + this.getCurrentSystemMemory() * 1000 + " KBytes");
+        System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getUsedMemory() + " KBytes");
+        System.out.println("Amount of storage used to backup the chunks" + this.getUsedMemory() * 1000 + " KBytes");
     }
 
     @Override
@@ -347,7 +344,7 @@ public class Peer implements PeerInterface{
     }
 
     public int getAvailableStorage() {
-        return MAX_SIZE -  this.currentSystemMemory;
+        return this.maxMemory -  this.usedMemory;
     }
 
     public String getVersion() {
@@ -398,16 +395,36 @@ public class Peer implements PeerInterface{
         return this.storedChunkHistory;
     }
 
-    public int getCurrentSystemMemory() {
-        return currentSystemMemory;
+    public int getMaxMemory() {
+        return this.maxMemory;
     }
 
-    public void setCurrentSystemMemory(int currentSystemMemory) {
-        this.currentSystemMemory = currentSystemMemory;
+    public void setMaxMemory(int maxMemory) {
+        this.maxMemory = maxMemory;
 
         // Save disk space info
         Properties diskProperties = new Properties();
-        diskProperties.setProperty("used", Integer.toString(this.currentSystemMemory));
+        diskProperties.setProperty("used", Integer.toString(this.usedMemory));
+        diskProperties.setProperty("max", Integer.toString(this.maxMemory));
+
+        try {
+            diskProperties.store(new FileOutputStream(DISK_INFO_PATH), null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getUsedMemory() {
+        return this.usedMemory;
+    }
+
+    public void setUsedMemory(int usedMemory) {
+        this.usedMemory = usedMemory;
+
+        // Save disk space info
+        Properties diskProperties = new Properties();
+        diskProperties.setProperty("used", Integer.toString(this.usedMemory));
+        diskProperties.setProperty("max", Integer.toString(this.maxMemory));
 
         try {
             diskProperties.store(new FileOutputStream(DISK_INFO_PATH), null);
@@ -431,24 +448,29 @@ public class Peer implements PeerInterface{
     public static void main(String[] args) throws IOException {
         String[] serviceAccessPoint = {"sda", "sad"};
         String[] mcAddress = {"224.0.0.0", "4445"};
-        String[] mdbAddress = {"224.0.0.3", "4446"};
+        String[] mdbAddress = {"224.0.0.1", "4446"};
         //String[] mdbAddress = {"224.0.0.1", "4446"};
         String[] mdrAddress = {"224.0.0.2", "4447"};
 
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 1);
-            //peer1.delete( FILE_STORAGE_PATH + "/1/" + "teste.jpg");
+            peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 2);
+            //peer1.delete( FILE_STORAGE_PATH + "/1/" + "Teste.txt");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer2.reclaim( 0);
+            peer2.reclaim(0);
         }
-        else{
+        else if(args[0].equals("3")){
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';
             Peer peer3 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            peer3.reclaim(130);
+        }
+        else {
+            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';
+            Peer peer4 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
         }
     }
 }

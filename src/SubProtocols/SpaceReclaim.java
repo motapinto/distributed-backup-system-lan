@@ -7,6 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import Message.Message;
 import Message.Dispatcher;
 import Peer.Peer;
+
+import static Common.Constants.MAX_DELAY;
 import static Common.Constants.REMOVED;
 
 public class SpaceReclaim {
@@ -28,24 +30,23 @@ public class SpaceReclaim {
      * Responsible for reclaiming a file
      *
      * @param peer         : peer listening to the multicast
-     * @param maxDiskSpace : maximum size that peer allocates for storing chunks
+     * @param maxDiskSpace : maximum size that peer allocates for storing chunks in KB
      */
     public SpaceReclaim(Peer peer, int maxDiskSpace) {
         this.peer = peer;
 
-        if(this.peer.getCurrentSystemMemory() > maxDiskSpace)
-            this.sizeToReclaim= this.peer.getCurrentSystemMemory() - maxDiskSpace;
+        if(this.peer.getUsedMemory() > (maxDiskSpace * 1000))
+            this.sizeToReclaim = this.peer.getUsedMemory() - (maxDiskSpace * 1000);
         else
             this.sizeToReclaim = 0;
 
+        this.peer.setMaxMemory(maxDiskSpace);
     }
 
     /**
      * Starts the restore protocol
      */
     public void startSpaceReclaimProcedure() {
-        this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() - this.sizeToReclaim);
-
         if(this.sizeToReclaim > 0)
             this.delete(true);
 
@@ -54,13 +55,13 @@ public class SpaceReclaim {
     }
 
     /**
-     *
+     * Initiates the delete of a chunk
      * @param firstTask : if true -> delete chunks with currRepDeg > desRepDeg
      *                    if false -> delete any chunk
      */
     public void delete(boolean firstTask) {
-        ConcurrentHashMap<String, String> repDegreeInfo = peer.getRepDegreeInfo();
-        ConcurrentHashMap<String, String> storedHistory = peer.getStoredChunkHistory();
+        ConcurrentHashMap<String, String> repDegreeInfo = this.peer.getRepDegreeInfo();
+        ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
 
         /* String(KEY) : "senderId_fileId_chuckNo"   |   String(VALUE) : "senderId" */
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
@@ -76,15 +77,19 @@ public class SpaceReclaim {
             String desRepDeg = repDegreeInfo.get(chunkId).split("_")[1];
 
             // if current replication degree is greater than the desired replication degree
-            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
+            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg))) {
+                System.out.println("delete chunk - first task");
                 this.deleteChunk(chunkId, entry.getValue());
-            else if(!firstTask)
+            }
+            else if(!firstTask && peerStorer == this.peer.getId()) {
+                System.out.println("delete chunk - second task");
                 this.deleteChunk(chunkId, entry.getValue());
+            }
         }
     }
 
     /**
-     *
+     * Deletes a chunk with specified chunkId
      * @param chunkId : fileId + "_" + chunkNo
      */
     public void deleteChunk(String chunkId, String peerOriginal) {
@@ -92,36 +97,47 @@ public class SpaceReclaim {
         String chunkNo = chunkId.split("_")[1];
         String pathName = Peer.FILE_STORAGE_PATH + "/" + peerOriginal + "/" + fileId + "/" + chunkNo;
 
-        System.out.println("chunkId: " + chunkId + " peerOriginal:" + peerOriginal+ " space to reclaim: " + this.sizeToReclaim );
-
-        File file = new File(pathName);
         int chunkSize = 0;
+        File file = new File(pathName);
         if(file.exists()) {
             chunkSize = (int) file.length();
             file.delete();
+            if(file.getParentFile().length() == 0)
+                file.getParentFile().delete();
+        } else {
+            file.getParentFile().delete();
         }
 
-        Message reply = this.sendRemovedMessage(chunkNo, fileId);
-        this.peer.updateRepDegreeInfo(reply, false);
-        this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() - chunkSize);
+        this.sendRemovedMessage(chunkNo, fileId);
+
+        for(Map.Entry<String, String> entry : this.peer.getStoredChunkHistory().entrySet()) {
+            String key = entry.getKey();
+            if(this.peer.getId() == Integer.parseInt(key.split("_")[0]))
+                if(key.split("_")[1].equals(fileId) && key.split("_")[2].equals(chunkNo))
+                    this.peer.getStoredChunkHistory().remove(key);
+
+        }
+
+        this.peer.setUsedMemory(this.peer.getUsedMemory() - chunkSize);
         this.sizeToReclaim -= chunkSize;
     }
 
     /**
      * Sends a REMOVED message to all peers
      */
-    public Message sendRemovedMessage(String chuckNo, String fileId) {
+    public void sendRemovedMessage(String chuckNo, String fileId) {
         Message reply = new Message(REMOVED, this.peer.getVersion(), Integer.toString(this.peer.getId()), fileId, chuckNo);
 
         Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
         this.peer.getSenderExecutor().submit(dispatcher);
 
-        return reply;
+        this.peer.updateRepDegreeInfo(reply, false);
     }
 
     /**
-     *
-     * @param message
+     * Updates replication degree of the deleted chunks and if the current replication degree
+     * is less than the desired one, ot will start the backup protocol
+     * @param message : received message from Dispatcher with the REMOVED message
      */
     public void updateChunkRepDegree(Message message) {
         this.peer.updateRepDegreeInfo(message, false);
@@ -141,13 +157,19 @@ public class SpaceReclaim {
 
             // if it has the chunk stored and the currRepDegree is less than the desRepDegree
             if(peerStorer == this.peer.getId() && entryChunkId.equals(chunkId) && Integer.parseInt(currRepDegree) < Integer.parseInt(desRepDegree))
-                this.startBackup(message, Integer.parseInt(desRepDegree));
+                return;//this.startBackup(message, Integer.parseInt(desRepDegree));
         }
     }
 
+    /**
+     * Starts again the backup protocol for a chunk if the current replication degree
+     * is less than the desired one
+     * @param message
+     * @param desiredRepDegree
+     */
     public void startBackup(Message message, int desiredRepDegree) {
         try {
-            Thread.sleep((long) (Math.random()*400));
+            Thread.sleep((long) (Math.random() * MAX_DELAY));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

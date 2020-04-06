@@ -1,6 +1,8 @@
 package Common;
 
 import java.security.MessageDigest;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static Common.Logs.logError;
 
 public class Utilities {
@@ -31,6 +33,12 @@ public class Utilities {
             hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public void printMap(ConcurrentHashMap<String, String> map){
+        for (String key : map.keySet()) {
+            System.out.println(key + " " + map.get(key));
+        }
     }
 }
 

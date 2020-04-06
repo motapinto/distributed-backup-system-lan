@@ -103,7 +103,7 @@ public class Backup {
         String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
         int repDeg =  Integer.parseInt(repDegString);
 
-        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= 5; tries++, sleepTime *= 2) {
+        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= PUTCHUNK_RETRIES; tries++, sleepTime *= 2) {
 
             this.peer.getSenderExecutor().submit(dispatcher);
 
@@ -152,7 +152,7 @@ public class Backup {
         }
 
         // Updates current system memory of the peer
-        this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
+        this.peer.setUsedMemory(this.peer.getUsedMemory() + message.getBody().length);
     }
 
     /**
@@ -161,7 +161,7 @@ public class Backup {
      */
     public void sendStoredMessage(Message message) {
         try {
-            Thread.sleep((long)Math.random() * 400);
+            Thread.sleep((long)Math.random() * MAX_DELAY);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

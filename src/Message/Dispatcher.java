@@ -33,7 +33,6 @@ public class Dispatcher implements Runnable{
         this.peer = peer;
         this.message = new Message(packet);
         this.type = MessageType.RECEIVER;
-
     }
 
     /**
@@ -79,6 +78,7 @@ public class Dispatcher implements Runnable{
                 break;
             case STORED:
                 this.peer.updateRepDegreeInfo(message, true);
+                break;
             case GETCHUNK:
                 break;
             case DELETE:
@@ -98,7 +98,6 @@ public class Dispatcher implements Runnable{
         DatagramSocket socket;
 
         System.out.println("Sent: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
-
 
         try {
             socket = new DatagramSocket();

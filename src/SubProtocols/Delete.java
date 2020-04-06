@@ -97,8 +97,8 @@ public class Delete {
 
             File[] files = folder.listFiles();
             for(File file : files) {
-                System.out.println("peer: " +  this.peer.getId() + "  current memory: " + this.peer.getCurrentSystemMemory() + "  chunk size " + (int)file.length());
-                this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() - (int)file.length());
+                System.out.println("peer: " +  this.peer.getId() + "  current memory: " + this.peer.getUsedMemory() + "  chunk size " + (int)file.length());
+                this.peer.setUsedMemory(this.peer.getUsedMemory() - (int)file.length());
                 file.delete();
                 System.out.println("length: " + file.length());
             }

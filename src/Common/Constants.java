@@ -17,7 +17,7 @@ public class Constants {
 
     /* */
     public static final int MAX_DELAY = 400;
-    public static final int MAX_MEMORY = 8000000; // 8MB
+    public static final int INITIAL_MAX_MEMORY = 100000000; // 100MB
     public static final int PUTCHUNK_RETRIES = 5;
     public static final int MAX_CHUNK_SIZE = 64000; // 64 KB
     public static final int MAX_PACKET_SIZE = 64500; // 64 KB

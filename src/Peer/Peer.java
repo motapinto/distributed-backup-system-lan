@@ -384,13 +384,13 @@ public class Peer implements PeerInterface{
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 1);
+            peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 1);
             //peer1.delete( FILE_STORAGE_PATH + "/1/" + "teste.jpg");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer2.reclaim( 100);
+            //peer2.reclaim( 100);
         }
         else{
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';

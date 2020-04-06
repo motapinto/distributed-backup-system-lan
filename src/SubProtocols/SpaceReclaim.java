@@ -77,9 +77,9 @@ public class SpaceReclaim {
             String desRepDeg = repDegreeInfo.get(chunkId).split("_")[1];
 
             // if current replication degree is greater than the desired replication degree
-            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
+            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)) && this.sizeToReclaim > 0)
                 this.deleteChunk(chunkId, entry.getValue());
-            else if(!firstTask)
+            else if(!firstTask && this.sizeToReclaim > 0)
                 this.deleteChunk(chunkId, entry.getValue());
         }
     }

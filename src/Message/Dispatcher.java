@@ -97,6 +97,9 @@ public class Dispatcher implements Runnable{
         DatagramPacket packet;
         DatagramSocket socket;
 
+        System.out.println("Sent: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
+
+
         try {
             socket = new DatagramSocket();
             byte[] buf = this.message.toBytes();

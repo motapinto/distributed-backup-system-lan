@@ -180,4 +180,16 @@ public class Backup {
     public void setFileId(String fileId) {
         this.fileId = fileId;
     }
+
+    public String getFileId() {
+        return this.fileId;
+    }
+
+    public int getDesiredRepDeg() {
+        return this.desiredRepDeg;
+    }
+
+    public Peer getPeer() {
+        return this.peer;
+    }
 }

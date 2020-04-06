@@ -8,6 +8,7 @@ import static Common.Constants.*;
 
 import java.io.*;
 import java.sql.SQLOutput;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -49,11 +50,17 @@ public class Peer implements PeerInterface{
     private ConcurrentHashMap<String, String> repDegreeInfo = new ConcurrentHashMap<>();
 
     /**
-     * String : "senderId_fileId_chuckNo"   |   String : "senderId"
+     * String : "senderId_fileId_chuckNo_size"   |   String : "senderId"
      * senderId from the key: senderId that send STORED message
      * senderId from the value: senderId that receives STORED message
      */
     private ConcurrentHashMap<String, String> storedChunkHistory = new ConcurrentHashMap<>();
+
+
+    /**
+     * ConcurrentHashMap used in state() to store all backup information
+     */
+    private ConcurrentHashMap<String, Backup> backupInfo = new ConcurrentHashMap<>();
 
 
     public Peer(String version, String id, String[] serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddresss) throws IOException {
@@ -193,8 +200,12 @@ public class Peer implements PeerInterface{
             Logs.logError("Maximum replication Degree reached!");
             return;
         }
+
         this.backup = new Backup(this, pathName, replicationDegree);
         this.backup.startPutChunkProcedure();
+
+        // Stores backup protocol to be used in state()
+        this.backupInfo.put(this.backup.getFileId(), this.backup);
     }
 
     public void restore(String pathname) {
@@ -202,11 +213,20 @@ public class Peer implements PeerInterface{
         this.restore.startGetChunkProcedure();
     }
 
+    /**
+     * The client shall specify the file to delete by its pathname
+     * @param pathname name of the file to delete -> should be in the peer's files directories
+     */
     public void delete(String pathname) {
         this.delete = new Delete(this, pathname);
         this.delete.startDeleteProcedure();
     }
 
+    /**
+     * The client shall specify the maximum disk space in KBytes that can be used for storing chunks.
+     * Thus, if maxDiskSpace = 0 => the peer shall reclaim all disk space previously allocated
+     * @param maxDiskSpace
+     */
     public void reclaim(int maxDiskSpace) {
         this.reclaim = new SpaceReclaim(this, maxDiskSpace);
         this.reclaim.startSpaceReclaimProcedure();
@@ -282,6 +302,39 @@ public class Peer implements PeerInterface{
         for (String key : map.keySet()) {
             System.out.println(key + " " + map.get(key));
         }
+    }
+    
+    public void state() {
+        for(Map.Entry<String, Backup> entry : this.backupInfo.entrySet()) {
+            String fileId = entry.getKey();
+            Backup backup = entry.getValue();
+
+            System.out.println("File pathname: " + Peer.FILE_STORAGE_PATH + backup.getPeer().getId() + "/" + backup.getPeer().getId()  + "/" + fileId);
+            System.out.println("Backup service id of the file: " + backup.getPeer().getId());
+            System.out.println("Desired replication degree: " + backup.getDesiredRepDeg());
+
+            System.out.println("Information about each file chunk:");
+            for(Map.Entry<String, String> chunk : this.repDegreeInfo.entrySet()) {
+                String chunkId = chunk.getKey();
+                String repDegInfo = chunk.getValue();
+
+                System.out.println("Id: " + backup.getFileId() + chunkId.split("_")[1]);
+                System.out.println("Perceived replication degree: " + repDegInfo.split("_")[0]);
+                System.out.println("Desired replication degree: " + repDegInfo.split("_")[1]);
+            }
+        }
+
+        System.out.println("Information about each stored chunk:");
+        for(Map.Entry<String, String> entry : this.storedChunkHistory.entrySet()) {
+            String fileId = entry.getKey().split("_")[1] + entry.getKey().split("_")[2];
+            System.out.println("Chunk id: " + entry.getKey().split("_")[1]);
+            //System.out.println("Chunk size: " + ); -> criar uma nova mensgaem igual a storedmas com o tamanho??
+            System.out.println("Perceived replication degree: " + entry.getValue().split("_")[0]);
+        }
+
+        System.out.println("Information about peer storage capacity");
+        System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getCurrentSystemMemory() + " KBytes");
+        System.out.println("Amount of storage used to backup the chunks" + this.getCurrentSystemMemory() * 1000 + " KBytes");
     }
 
     @Override

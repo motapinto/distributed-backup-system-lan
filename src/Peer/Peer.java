@@ -207,8 +207,8 @@ public class Peer implements PeerInterface{
         this.delete.startDeleteProcedure();
     }
 
-    public void reclaim(int sizeToReclaim) {
-        this.reclaim = new SpaceReclaim(this, sizeToReclaim);
+    public void reclaim(int maxDiskSpace) {
+        this.reclaim = new SpaceReclaim(this, maxDiskSpace);
         this.reclaim.startSpaceReclaimProcedure();
     }
 
@@ -378,19 +378,20 @@ public class Peer implements PeerInterface{
     public static void main(String[] args) throws IOException {
         String[] serviceAccessPoint = {"sda", "sad"};
         String[] mcAddress = {"224.0.0.0", "4445"};
-        String[] mdbAddress = {"224.0.0.1", "4446"};
+        String[] mdbAddress = {"224.0.0.3", "4446"};
+        //String[] mdbAddress = {"224.0.0.1", "4446"};
         String[] mdrAddress = {"224.0.0.2", "4447"};
 
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 1);
+            //peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 1);
             //peer1.delete( FILE_STORAGE_PATH + "/1/" + "teste.jpg");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer2.reclaim( 100);
+            peer2.reclaim( 0);
         }
         else{
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';

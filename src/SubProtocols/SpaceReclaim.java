@@ -1,14 +1,12 @@
 package SubProtocols;
 
-import Message.Message;
-import Message.Dispatcher;
-import Peer.Peer;
-
 import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static Common.Constants.MAX_CHUNK_SIZE;
+import Message.Message;
+import Message.Dispatcher;
+import Peer.Peer;
 import static Common.Constants.REMOVED;
 
 public class SpaceReclaim {
@@ -29,23 +27,23 @@ public class SpaceReclaim {
     /**
      * Responsible for reclaiming a file
      *
-     * @param peer          : peer listening to the multicast
-     * @param sizeToReclaim : size that peer intends to reclaim
+     * @param peer         : peer listening to the multicast
+     * @param maxDiskSpace : maximum size that peer allocates for storing chunks
      */
-    public SpaceReclaim(Peer peer, int sizeToReclaim) {
+    public SpaceReclaim(Peer peer, int maxDiskSpace) {
         this.peer = peer;
-        this.sizeToReclaim = sizeToReclaim;
+
+        if(this.peer.getCurrentSystemMemory() > maxDiskSpace)
+            this.sizeToReclaim= this.peer.getCurrentSystemMemory() - maxDiskSpace;
+        else
+            this.sizeToReclaim = 0;
+
     }
 
     /**
      * Starts the restore protocol
      */
     public void startSpaceReclaimProcedure() {
-
-        if(this.sizeToReclaim > this.peer.getCurrentSystemMemory()) {
-            this.sizeToReclaim = this.peer.getCurrentSystemMemory();
-        }
-
         this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() - this.sizeToReclaim);
 
         if(this.sizeToReclaim > 0)
@@ -68,18 +66,19 @@ public class SpaceReclaim {
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
             String rawKey = entry.getKey();
 
+            if(this.sizeToReclaim <= 0) return;
+
             // chunkId = fileId + "_" + chunkNo
             String chunkId = rawKey.split("_")[1] + "_" + rawKey.split("_")[2];
             int peerStorer = Integer.parseInt(rawKey.split("_")[0]);
 
-            this.peer.printMap(repDegreeInfo);
             String currRepDeg = repDegreeInfo.get(chunkId).split("_")[0];
             String desRepDeg = repDegreeInfo.get(chunkId).split("_")[1];
 
             // if current replication degree is greater than the desired replication degree
-            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)) && this.sizeToReclaim > 0)
+            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
                 this.deleteChunk(chunkId, entry.getValue());
-            else if(!firstTask && this.sizeToReclaim > 0)
+            else if(!firstTask)
                 this.deleteChunk(chunkId, entry.getValue());
         }
     }

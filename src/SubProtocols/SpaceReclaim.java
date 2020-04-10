@@ -93,7 +93,7 @@ public class SpaceReclaim {
     public void deleteChunk(String chunkId) {
         String fileId = chunkId.split("_")[0];
         String chunkNo = chunkId.split("_")[1];
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo;
+        String pathName = this.peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo;
 
         int chunkSize = 0;
         File file = new File(pathName);
@@ -116,7 +116,7 @@ public class SpaceReclaim {
 
         }
 
-        this.peer.setUsedMemory(this.peer.getUsedMemory() - chunkSize);
+        this.peer.setUsedMemory(-chunkSize);
         this.sizeToReclaim -= chunkSize;
     }
 
@@ -168,7 +168,7 @@ public class SpaceReclaim {
         }
 
         if(this.receivedPutChunks.get(chunkId) == null) {
-            String pathName = Peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo;
+            String pathName = this.peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo;
 
             File file = new File(pathName);
             InputStream inputFile;

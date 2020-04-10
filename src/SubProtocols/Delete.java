@@ -8,6 +8,7 @@ import Message.Message;
 import Peer.Peer;
 import Message.Dispatcher;
 import static Common.Constants.DELETE;
+import static Common.Constants.MAX_DELAY;
 
 public class Delete {
 
@@ -58,9 +59,15 @@ public class Delete {
     public void sendDeleteMessage() {
         Message request = new Message(DELETE, this.peer.getVersion(), Integer.toString(this.peer.getId()), this.fileId);
         // 5 tries to make sure the message gets to all peers
-        for(int i = 0; i < 5; i++) {
+        for(int i = 0; i < 3; i++) {
+
             Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
             this.peer.getSenderExecutor().submit(dispatcher);
+            try {
+                Thread.sleep(MAX_DELAY);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -73,7 +80,6 @@ public class Delete {
         Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
         Map<String, String> storedHistory = peer.getStoredChunkHistory();
 
-        /* String(KEY) : "fileId_chuckNo"   |   String(VALUE) : "repDegree_desiredRepDegree" */
         for(Map.Entry<String, String> entry : repDegreeInfo.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[0].equals(fileId)) {
@@ -82,26 +88,32 @@ public class Delete {
             }
         }
 
+        File file;
         /* String(KEY) : "senderId_fileId_chuckNo"   |   String(VALUE) : "senderId" */
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[1].equals(fileId)) {
-                storedHistory.remove(key);
-                peer.saveMap(peer.STORED_CHUNK_HISTORY_PATH, storedHistory);
+                file =  new File(Peer.FILE_STORAGE_PATH + "/" + key.split("_")[1] + "/" + key.split("_")[2]);
+
+                try {
+                    this.peer.getMutex().acquire();
+                    if(file.exists()) {
+                        this.peer.setUsedMemory(-1 * (int) file.length());
+                        System.out.println("used memory: " + this.peer.getUsedMemory() + " -- size of the chunk: " + file.length());
+                        file.delete();
+                        storedHistory.remove(key);
+                        peer.saveMap(peer.STORED_CHUNK_HISTORY_PATH, storedHistory);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    this.peer.getMutex().release();
+                }
             }
         }
 
-        if(this.peer.getId() != peerId) {
-            File folder = new File(Peer.FILE_STORAGE_PATH + "/" + fileId);
-
-            File[] files = folder.listFiles();
-            for(File file : files) {
-                System.out.println("peer: " +  this.peer.getId() + "  current memory: " + this.peer.getUsedMemory() + "  chunk size " + (int)file.length());
-                this.peer.setUsedMemory(this.peer.getUsedMemory() - (int)file.length());
-                file.delete();
-                System.out.println("length: " + file.length());
-            }
-            folder.delete();
-        }
+        File folder = new File(Peer.FILE_STORAGE_PATH + "/" + fileId);
+        folder.delete();
+        this.peer.getInitiatorBackupInfo().remove(fileId);
     }
 }

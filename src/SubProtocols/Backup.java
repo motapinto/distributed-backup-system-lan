@@ -134,7 +134,7 @@ public class Backup {
         this.peer.initiateRepDegreeInfo(message);
         this.sendStoredMessage(message);
 
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId()
+        String pathName = this.peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId()
                 + "/" + message.getHeader().getChuckNo();
 
         File out = new File(pathName);
@@ -156,7 +156,7 @@ public class Backup {
         }
 
         // Updates current system memory of the peer
-        this.peer.setUsedMemory(this.peer.getUsedMemory() + message.getBody().length);
+        this.peer.setUsedMemory(message.getBody().length);
     }
 
     /**

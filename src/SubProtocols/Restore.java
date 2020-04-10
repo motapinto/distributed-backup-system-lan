@@ -1,5 +1,6 @@
 package SubProtocols;
 
+import Common.Utilities;
 import Peer.Peer;
 import Message.*;
 import java.io.File;
@@ -45,21 +46,17 @@ public class Restore {
     }
 
 
-    public void startRestoreFileProcedure(String fileId){
+    public void startRestoreFileProcedure(){
 
-        this.fileId = fileId;
-        System.out.println(this.fileId);
+
+        File file = new File(this.pathName);
+        this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
+
         this.numberOfChunks = 0;
         int number = 0;
-        String originalSenderPeerId;
         Path fileLocation;
         byte[] data;
 
-        File tempFile = new File(this.pathName);
-        if(tempFile.exists()){
-            System.out.println("File already exists");
-            return;
-        }
 
         while(true){
             if(this.peer.getRepDegreeInfo().get(this.fileId + "_" + number) != null){
@@ -74,9 +71,7 @@ public class Restore {
 
         for(int i = 0; i < numberOfChunksAux; i++){
             if(this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + this.fileId + "_" + i) != null){
-                originalSenderPeerId = this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + this.fileId + "_" + i);
-
-                fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + originalSenderPeerId + "/" + this.fileId + "/" + i);
+                fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + this.fileId + "/" + i);
                 data = new byte[0];
 
                 try {
@@ -126,6 +121,7 @@ public class Restore {
         }
     }
 
+
     public void GetChunksProcedure(){
 
         int numberOfChunk = 0;
@@ -151,13 +147,12 @@ public class Restore {
 
 
         if(this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + fileId + "_" + chunkNo) != null){
-            originalSenderPeerId = this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + fileId + "_" + chunkNo);
             try {
                 Thread.sleep((long) (Math.random() * 400));
 
                 if(!this.peer.hasChunkBeenSent(fileId, chunkNo)) {
 
-                    Path fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + originalSenderPeerId + "/" + fileId + "/" + chunkNo);
+                    Path fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + fileId + "/" + chunkNo);
                     byte[] data = new byte[0];
 
                     try {

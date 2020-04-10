@@ -78,9 +78,9 @@ public class Peer implements PeerInterface{
         this.id = Integer.parseInt(id);
         this.serviceAccessPoint = serviceAccessPoint;
 
-        REPLICATION_DEGREE_INFO_PATH = FILE_STORAGE_PATH + "/" + this.id + "/replicationDegreeInfo.properties";
-        DISK_INFO_PATH = FILE_STORAGE_PATH + "/" + this.id + "/diskInfo.properties";
-        STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/" + this.id + "/storedChunkHistory.properties";
+        REPLICATION_DEGREE_INFO_PATH = FILE_STORAGE_PATH + "/replicationDegreeInfo.properties";
+        DISK_INFO_PATH = FILE_STORAGE_PATH + "/diskInfo.properties";
+        STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/storedChunkHistory.properties";
 
         this.setupFiles();
         this.readProperties();
@@ -93,8 +93,12 @@ public class Peer implements PeerInterface{
      * Create the directory Storage/PeerId
      */
     private void setupFiles() {
-        File dir = new File(FILE_STORAGE_PATH + "/" + this.id);
-        if(!dir.exists()) dir.mkdirs();
+        File dir = new File(FILE_STORAGE_PATH);
+        if(!dir.exists()) {
+            boolean mkdirs = dir.mkdirs();
+            if(!mkdirs)
+                System.out.println("Error creating directory storage" + this.id);
+        }
     }
 
     /**
@@ -220,9 +224,9 @@ public class Peer implements PeerInterface{
         this.backupInfo.put(this.backup.getFileId(), this.backup);
     }
 
-    public void restore(String pathname, String fileId) {
+    public void restore(String pathname) {
         this.restore = new Restore(this, pathname);
-        this.restore.startRestoreFileProcedure(fileId);
+        this.restore.startRestoreFileProcedure();
     }
 
     /**
@@ -328,7 +332,7 @@ public class Peer implements PeerInterface{
             String fileId = entry.getKey();
             Backup backup = entry.getValue();
 
-            System.out.println("File pathname: " + Peer.FILE_STORAGE_PATH + backup.getPeer().getId() + "/" + backup.getPeer().getId()  + "/" + fileId);
+            System.out.println("File pathname: " + Peer.FILE_STORAGE_PATH + "/" + fileId);
             System.out.println("Backup service id of the file: " + backup.getPeer().getId());
             System.out.println("Desired replication degree: " + backup.getDesiredRepDeg());
 
@@ -431,25 +435,20 @@ public class Peer implements PeerInterface{
         this.maxMemory = maxMemory;
 
         // Save disk space info
-        Properties diskProperties = new Properties();
-        diskProperties.setProperty("used", Integer.toString(this.usedMemory));
-        diskProperties.setProperty("max", Integer.toString(this.maxMemory));
-
-        try {
-            diskProperties.store(new FileOutputStream(DISK_INFO_PATH), null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        setMemory();
     }
 
     public int getUsedMemory() {
         return this.usedMemory;
     }
 
-    public void setUsedMemory(int usedMemory) {
+    public void setUsedMemory(int usedMemory){
         this.usedMemory = usedMemory;
-
         // Save disk space info
+        setMemory();
+    }
+
+    private void setMemory() {
         Properties diskProperties = new Properties();
         diskProperties.setProperty("used", Integer.toString(this.usedMemory));
         diskProperties.setProperty("max", Integer.toString(this.maxMemory));
@@ -483,12 +482,12 @@ public class Peer implements PeerInterface{
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
             //peer1.backup( FILE_STORAGE_PATH + "teste.PNG", 2);
-            //peer1.restore( FILE_STORAGE_PATH + "teste.PNG", "4D669C49098382A74B1C07DD46C390E6F071B957BBA89C62186473BC0250705E");
+            //peer1.restore( FILE_STORAGE_PATH + "teste.PNG");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer2.restore( FILE_STORAGE_PATH + "/2/" + "teste.PNG", "4D669C49098382A74B1C07DD46C390E6F071B957BBA89C62186473BC0250705E");
+            peer2.restore(FILE_STORAGE_PATH + "teste.PNG");
         }
         else if(args[0].equals("3")){
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';

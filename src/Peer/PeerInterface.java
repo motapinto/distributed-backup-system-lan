@@ -19,7 +19,7 @@ public interface PeerInterface  {
      * @param pathname name of the file to restore - should be in the peer's files directories
      * @throws IOException
      */
-    void restore(String pathname, String fileId) throws IOException;
+    void restore(String pathname) throws IOException;
 
     /**
      * Function used by the user to delete a determined file

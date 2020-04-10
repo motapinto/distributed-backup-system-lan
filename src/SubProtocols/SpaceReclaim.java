@@ -93,7 +93,7 @@ public class SpaceReclaim {
     public void deleteChunk(String chunkId, String peerOriginal) {
         String fileId = chunkId.split("_")[0];
         String chunkNo = chunkId.split("_")[1];
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + peerOriginal + "/" + fileId + "/" + chunkNo;
+        String pathName = Peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo;
 
         int chunkSize = 0;
         File file = new File(pathName);

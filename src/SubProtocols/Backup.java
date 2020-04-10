@@ -134,7 +134,7 @@ public class Backup {
         this.peer.initiateRepDegreeInfo(message);
         this.sendStoredMessage(message);
 
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId()
+        String pathName = this.peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId()
                 + "/" + message.getHeader().getChuckNo();
 
         File out = new File(pathName);

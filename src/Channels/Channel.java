@@ -25,15 +25,18 @@ public class Channel implements Runnable {
      * @param port : multicast port
      * @throws IOException
      */
-    Channel(Peer peer, String address, int port) throws IOException {
+    Channel(Peer peer, String address, int port) {
         this.peer = peer;
         this.address = address;
         this.port = port;
-        this.multicastSocket = new MulticastSocket(this.port);
-        this.multicastSocket.setTimeToLive(1);
-
-        InetAddress ipAddress = InetAddress.getByName(address);
-        this.multicastSocket.joinGroup(ipAddress);
+        try {
+            this.multicastSocket = new MulticastSocket(this.port);
+            this.multicastSocket.setTimeToLive(1);
+            InetAddress ipAddress = InetAddress.getByName(address);
+            this.multicastSocket.joinGroup(ipAddress);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

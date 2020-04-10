@@ -12,9 +12,8 @@ public class MC extends Channel {
      * @param peer : peer listening to the multicast
      * @param address : multicast address
      * @param port : multicast port
-     * @throws IOException
      */
-    public MC(Peer peer, String address, int port) throws IOException {
+    public MC(Peer peer, String address, int port) {
         super(peer, address, port);
         Logs.log("Control channel initialized");
     }

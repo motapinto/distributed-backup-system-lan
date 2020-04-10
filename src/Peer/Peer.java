@@ -7,20 +7,22 @@ import SubProtocols.*;
 import static Common.Constants.*;
 
 import java.io.*;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Peer implements PeerInterface{
+public class Peer extends UnicastRemoteObject implements PeerInterface{
     private final String version;
     private int id;
-    private final String[] serviceAccessPoint;
+    private final String serviceAccessPoint;
     private int usedMemory = INITIAL_MAX_MEMORY;
     private int maxMemory = INITIAL_MAX_MEMORY;
 
-    public static String FILE_STORAGE_PATH = "storage";
+    public String FILE_STORAGE_PATH;
     public String REPLICATION_DEGREE_INFO_PATH;
     public String DISK_INFO_PATH ;
     public String STORED_CHUNK_HISTORY_PATH;
@@ -76,11 +78,14 @@ public class Peer implements PeerInterface{
     private Map<String, String> initiatorBackupInfo = new ConcurrentHashMap<String, String>();
 
 
-    public Peer(String version, String id, String[] serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddresss) throws IOException {
+    public Peer(String version, String id, String serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
+        super();
+
         this.version = version;
         this.id = Integer.parseInt(id);
         this.serviceAccessPoint = serviceAccessPoint;
 
+        FILE_STORAGE_PATH = "storage" + this.id;
         REPLICATION_DEGREE_INFO_PATH = FILE_STORAGE_PATH + "/replicationDegreeInfo.properties";
         DISK_INFO_PATH = FILE_STORAGE_PATH + "/diskInfo.properties";
         STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/storedChunkHistory.properties";
@@ -88,7 +93,7 @@ public class Peer implements PeerInterface{
 
         this.setupFiles();
         this.readProperties();
-        this.setupChannels(mcAddress, mdbAddress, mdrAddresss);
+        this.setupChannels(mcAddress, mdbAddress, mdrAddress);
         this.setupExecutors();
         this.createProtocols();
     }
@@ -140,7 +145,7 @@ public class Peer implements PeerInterface{
      * @param mdbAddress : address of the backup chanel
      * @param mdrAddress : address of the restore chanel
      */
-    private void setupChannels(String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
+    private void setupChannels(String[] mcAddress, String[] mdbAddress, String[] mdrAddress) {
         this.controlChannel = new MC(this, mcAddress[0], Integer.parseInt(mcAddress[1]));
         this.backupChannel = new MDB(this, mdbAddress[0], Integer.parseInt(mdbAddress[1]));
         this.restoreChannel = new MDR(this, mdrAddress[0], Integer.parseInt(mdrAddress[1]));
@@ -341,7 +346,7 @@ public class Peer implements PeerInterface{
             String fileId = entry.getKey();
             Backup backup = entry.getValue();
 
-            System.out.println("File pathname: " + Peer.FILE_STORAGE_PATH + "/" + fileId);
+            System.out.println("File pathname: " + this.FILE_STORAGE_PATH + "/" + fileId);
             System.out.println("Backup service id of the file: " + backup.getPeer().getId());
             System.out.println("Desired replication degree: " + backup.getDesiredRepDeg());
 
@@ -387,7 +392,7 @@ public class Peer implements PeerInterface{
         return id;
     }
 
-    public String[] getServiceAccessPoint() {
+    public String getServiceAccessPoint() {
         return serviceAccessPoint;
     }
 
@@ -467,34 +472,5 @@ public class Peer implements PeerInterface{
 
     public ExecutorService getReceiverExecutor() {
         return this.receiverExecutor;
-    }
-
-    public static void main(String[] args) throws IOException {
-        String[] serviceAccessPoint = {"sda", "sad"};
-        String[] mcAddress = {"224.0.0.0", "4445"};
-        String[] mdbAddress = {"224.0.0.3", "4446"};
-        String[] mdrAddress = {"224.0.0.2", "4447"};
-
-        if(args[0].equals("1")) {
-            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
-            Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.backup( FILE_STORAGE_PATH + "/Teste.txt", 2);
-            //peer1.restore( FILE_STORAGE_PATH + "teste.PNG");
-        }
-        else if(args[0].equals("2")) {
-            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
-            Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer2.restore(FILE_STORAGE_PATH + "teste.PNG");
-            peer2.reclaim(0);
-        }
-        else if(args[0].equals("3")){
-            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';
-            Peer peer3 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer3.reclaim(130);
-        }
-        else {
-            FILE_STORAGE_PATH = FILE_STORAGE_PATH + '4';
-            Peer peer4 = new Peer("1", "4", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-        }
     }
 }

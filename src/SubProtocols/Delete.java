@@ -73,7 +73,6 @@ public class Delete {
         Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
         Map<String, String> storedHistory = peer.getStoredChunkHistory();
 
-        /* String(KEY) : "fileId_chuckNo"   |   String(VALUE) : "repDegree_desiredRepDegree" */
         for(Map.Entry<String, String> entry : repDegreeInfo.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[0].equals(fileId)) {
@@ -82,7 +81,6 @@ public class Delete {
             }
         }
 
-        /* String(KEY) : "senderId_fileId_chuckNo"   |   String(VALUE) : "senderId" */
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[1].equals(fileId)) {
@@ -92,7 +90,7 @@ public class Delete {
         }
 
         if(this.peer.getId() != peerId) {
-            File folder = new File(Peer.FILE_STORAGE_PATH + "/" + fileId);
+            File folder = new File(this.peer.FILE_STORAGE_PATH + "/" + fileId);
 
             File[] files = folder.listFiles();
             for(File file : files) {

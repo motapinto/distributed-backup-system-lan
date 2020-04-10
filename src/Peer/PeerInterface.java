@@ -11,7 +11,7 @@ public interface PeerInterface  {
      * @param replicationDegree : desired replication degree for the file
      * @throws IOException
      */
-    void backup(String pathname, int replicationDegree) throws IOException;
+    void backup(String pathname, int replicationDegree);
 
     /**
      * Function used by the user to restore a determined file
@@ -19,7 +19,7 @@ public interface PeerInterface  {
      * @param pathname name of the file to restore - should be in the peer's files directories
      * @throws IOException
      */
-    void restore(String pathname) throws IOException;
+    void restore(String pathname);
 
     /**
      * Function used by the user to delete a determined file
@@ -27,7 +27,7 @@ public interface PeerInterface  {
      * @param pathname name of the file to delete - should be in the peer's files directories
      * @throws IOException
      */
-    void delete(String pathname) throws IOException;
+    void delete(String pathname);
 
     /**
      * Function used by the user to tell to a determined peer the maximum disk space used for
@@ -36,5 +36,10 @@ public interface PeerInterface  {
      * @param maxDiskSpace
      * @throws IOException
      */
-    void reclaim(int maxDiskSpace) throws IOException;
+    void reclaim(int maxDiskSpace);
+
+    /**
+     * Prints the state.............................
+     */
+    void state();
 }

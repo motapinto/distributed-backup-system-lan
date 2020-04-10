@@ -2,7 +2,6 @@ package SubProtocols;
 
 import java.io.File;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import Common.Utilities;
 import Message.Message;
@@ -71,8 +70,8 @@ public class Delete {
      */
     public void deleteFile(int peerId, String fileId) {
 
-        ConcurrentHashMap<String, String> repDegreeInfo = peer.getRepDegreeInfo();
-        ConcurrentHashMap<String, String> storedHistory = peer.getStoredChunkHistory();
+        Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
+        Map<String, String> storedHistory = peer.getStoredChunkHistory();
 
         /* String(KEY) : "fileId_chuckNo"   |   String(VALUE) : "repDegree_desiredRepDegree" */
         for(Map.Entry<String, String> entry : repDegreeInfo.entrySet()) {

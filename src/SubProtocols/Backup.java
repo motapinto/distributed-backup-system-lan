@@ -39,13 +39,13 @@ public class Backup {
         this.pathName = pathName;
     }
 
-
     /**
      * Splits a file into chunks and for each chunk send a PUTCHUNK message
      */
     public void startPutChunkProcedure() {
         File file = new File(this.pathName);
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
+
         InputStream inputFile = null;
         try {
             inputFile = new FileInputStream(file.getAbsolutePath());
@@ -62,7 +62,6 @@ public class Backup {
 
         byte[] chunk;
         int bytesRead = 0;
-
         for (int chuckNo = 0; chuckNo < numNecessaryChunks; chuckNo++) {
             chunk = new byte[MAX_CHUNK_SIZE];
             try {
@@ -127,8 +126,10 @@ public class Backup {
      * @param message : PUTCHUNK message
      */
     public void startStoredProcedure(Message message) {
-
         if(this.peer.getAvailableStorage() < message.getBody().length) return;
+
+        if(this.peer.getInitiatorBackupInfo().get(message.getHeader().getFileId()) != null)
+            return;
 
         this.peer.initiateRepDegreeInfo(message);
         this.sendStoredMessage(message);

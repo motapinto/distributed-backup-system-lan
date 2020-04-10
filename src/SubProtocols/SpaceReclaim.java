@@ -80,9 +80,9 @@ public class SpaceReclaim {
 
             // if current replication degree is greater than the desired replication degree
             if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
-                this.deleteChunk(chunkId, entry.getValue());
+                this.deleteChunk(chunkId);
             else if(!firstTask && peerStorer == this.peer.getId())
-                this.deleteChunk(chunkId, entry.getValue());
+                this.deleteChunk(chunkId);
         }
     }
 
@@ -90,10 +90,10 @@ public class SpaceReclaim {
      * Deletes a chunk with specified chunkId
      * @param chunkId : fileId + "_" + chunkNo
      */
-    public void deleteChunk(String chunkId, String peerOriginal) {
+    public void deleteChunk(String chunkId) {
         String fileId = chunkId.split("_")[0];
         String chunkNo = chunkId.split("_")[1];
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + peerOriginal + "/" + fileId + "/" + chunkNo;
+        String pathName = Peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo;
 
         int chunkSize = 0;
         File file = new File(pathName);
@@ -174,18 +174,11 @@ public class SpaceReclaim {
 
         if(this.receivedPutChunks.get(chunkId) != null) {
             ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
-            String originalFileSender;
 
-            if(storedHistory.get(this.peer.getId() + "_" + chunkId) != null)
-                originalFileSender = storedHistory.get(this.peer.getId() + "_" + chunkId);
-            else
-                return;
-
-            String pathName = Peer.FILE_STORAGE_PATH + "/" + originalFileSender + "/" +
-                    message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
+            String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
 
             File file = new File(pathName);
-            InputStream inputFile = null;
+            InputStream inputFile;
             byte[] chunk = null;
 
             try {
@@ -196,7 +189,6 @@ public class SpaceReclaim {
             }
 
             Backup backup = new Backup(this.peer, pathName, desiredRepDegree);
-            backup.setSenderId(Integer.parseInt(originalFileSender));
             backup.sendPutChunkMessage(chunk, Integer.parseInt(message.getHeader().getChuckNo()), message.getHeader().getFileId());
         }
     }

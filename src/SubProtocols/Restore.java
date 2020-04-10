@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.sql.SQLOutput;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import static java.lang.Thread.sleep;
 
 public class Restore {
@@ -34,7 +33,6 @@ public class Restore {
     public Restore(Peer peer, String pathname) {
         this.peer = peer;
         this.pathName = pathname;
-
     }
 
     /**
@@ -49,11 +47,19 @@ public class Restore {
 
     public void startRestoreFileProcedure(String fileId){
 
-
         this.fileId = fileId;
         System.out.println(this.fileId);
         this.numberOfChunks = 0;
         int number = 0;
+        String originalSenderPeerId;
+        Path fileLocation;
+        byte[] data;
+
+        File tempFile = new File(this.pathName);
+        if(tempFile.exists()){
+            System.out.println("File already exists");
+            return;
+        }
 
         while(true){
             if(this.peer.getRepDegreeInfo().get(this.fileId + "_" + number) != null){
@@ -62,6 +68,26 @@ public class Restore {
             else
                 break;
             number++;
+        }
+
+        int numberOfChunksAux = this.numberOfChunks;
+
+        for(int i = 0; i < numberOfChunksAux; i++){
+            if(this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + this.fileId + "_" + i) != null){
+                originalSenderPeerId = this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + this.fileId + "_" + i);
+
+                fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + originalSenderPeerId + "/" + this.fileId + "/" + i);
+                data = new byte[0];
+
+                try {
+                    data = Files.readAllBytes(fileLocation);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                this.chunks.put(this.fileId + "_" + i, data);
+                this.numberOfChunks--;
+            }
         }
 
         System.out.println("Number of chunks necessary : " + this.numberOfChunks);
@@ -109,7 +135,7 @@ public class Restore {
         System.out.println(this.numberOfChunks);
 
         for(int i = 0; i <  this.numberOfChunks; i++){
-           if(this.chunks.get(this.fileId + "_" + Integer.toString(i)) == null) {
+           if(this.chunks.get(this.fileId + "_" + i) == null){
                message = new Message("GETCHUNK", Integer.toString(1), Integer.toString(this.peer.getId()), this.fileId, Integer.toString(i));
                dispatcher = new Dispatcher(this.peer, message, this.peer.getControlChannel());
                this.peer.getSenderExecutor().submit(dispatcher);

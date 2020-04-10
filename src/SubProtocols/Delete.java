@@ -93,7 +93,7 @@ public class Delete {
         }
 
         if(this.peer.getId() != peerId) {
-            File folder = new File(Peer.FILE_STORAGE_PATH + "/" + peerId + "/" + fileId);
+            File folder = new File(Peer.FILE_STORAGE_PATH + "/" + fileId);
 
             File[] files = folder.listFiles();
             for(File file : files) {

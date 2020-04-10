@@ -53,10 +53,10 @@ public class Backup {
             e.printStackTrace();
         }
 
-        int numNecessaryChunks =(int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
+        int numNecessaryChunks = (int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
 
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {
-            Logs.logError("File can only have  ");
+            Logs.logError("File can only have ...");
             return;
         }
 
@@ -74,7 +74,7 @@ public class Backup {
 
             if(chuckNo == numNecessaryChunks - 1 && bytesRead < MAX_CHUNK_SIZE) {
                 byte[] tmp = new byte[bytesRead];
-                System.arraycopy(chunk, 0, tmp, 0, bytesRead); // meter readNBytes!!!!
+                System.arraycopy(chunk, 0, tmp, 0, bytesRead);
                 this.sendPutChunkMessage(tmp, chuckNo, this.fileId);
             }
             else
@@ -133,8 +133,8 @@ public class Backup {
         this.peer.initiateRepDegreeInfo(message);
         this.sendStoredMessage(message);
 
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getSenderId() + "/" +
-                message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
+        String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId()
+                + "/" + message.getHeader().getChuckNo();
 
         File out = new File(pathName);
 
@@ -175,16 +175,6 @@ public class Backup {
         Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
         this.peer.getSenderExecutor().submit(dispatcher);
     }
-
-    public void setDesiredRepDeg(int desiredRepDeg) {
-        this.desiredRepDeg = desiredRepDeg;
-    }
-
-    public void setFileId(String fileId) {
-        this.fileId = fileId;
-    }
-
-    public void setSenderId(int senderId) { this.senderId = senderId; }
 
     public String getFileId() {
         return this.fileId;

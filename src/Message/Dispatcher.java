@@ -74,6 +74,7 @@ public class Dispatcher implements Runnable{
 
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
+                this.peer.getSpaceReclaim().storePutChunk(message);
                 this.peer.getBackup().startStoredProcedure(message);
                 break;
             case STORED:

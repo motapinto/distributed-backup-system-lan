@@ -156,7 +156,7 @@ public class Backup {
         }
 
         // Updates current system memory of the peer
-        this.peer.setUsedMemory(this.peer.getUsedMemory() + message.getBody().length);
+        this.peer.setUsedMemory(message.getBody().length);
     }
 
     /**

@@ -116,7 +116,7 @@ public class SpaceReclaim {
 
         }
 
-        this.peer.setUsedMemory(this.peer.getUsedMemory() - chunkSize);
+        this.peer.setUsedMemory(-chunkSize);
         this.sizeToReclaim -= chunkSize;
     }
 

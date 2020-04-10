@@ -14,6 +14,7 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 public class Peer extends UnicastRemoteObject implements PeerInterface{
     private final String version;
@@ -21,12 +22,15 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
     private final String serviceAccessPoint;
     private int usedMemory = INITIAL_MAX_MEMORY;
     private int maxMemory = INITIAL_MAX_MEMORY;
+    */
 
     public String FILE_STORAGE_PATH;
     public String REPLICATION_DEGREE_INFO_PATH;
     public String DISK_INFO_PATH ;
     public String STORED_CHUNK_HISTORY_PATH;
     public String INITIATOR_BACKUP_INFO_PATH;
+
+    private Semaphore mutex = new Semaphore(1);
 
     /** Channels */
     private Channel controlChannel;
@@ -75,9 +79,14 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
     /**
      * ConcurrentHashMap used to store the initiator of the backup
      */
-    private Map<String, String> initiatorBackupInfo = new ConcurrentHashMap<String, String>();
+    private Map<String, String> initiatorBackupInfo = new ConcurrentHashMap<>();
 
 
+    
+    /**
+     * ConcurrentHashMap used to store the memory info
+     */
+    private Map<String, String> memoryInfo = new ConcurrentHashMap<>();
     public Peer(String version, String id, String serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
         super();
 
@@ -118,24 +127,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
         readMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
         readMap(INITIATOR_BACKUP_INFO_PATH, this.initiatorBackupInfo);
 
-        // Get disk space info
-        File diskInfo = new File(DISK_INFO_PATH);
 
-        if (!diskInfo.exists()) {
-            this.setMaxMemory(INITIAL_MAX_MEMORY);
-            this.setUsedMemory(0);
-            return;
+        if(!readMap(DISK_INFO_PATH, this.memoryInfo)){
+            this.memoryInfo.put("used", "0");
+            this.memoryInfo.put("max", Integer.toString(INITIAL_MAX_MEMORY));
+            saveMap(DISK_INFO_PATH, this.memoryInfo);
         }
-
-        Properties diskProperties = new Properties();
-        try {
-            diskProperties.load(new FileInputStream(DISK_INFO_PATH));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        this.usedMemory = Integer.parseInt(diskProperties.getProperty("used"));
-        this.maxMemory = Integer.parseInt(diskProperties.getProperty("max"));
     }
 
     /**
@@ -178,9 +175,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
      * A .properties file is a simple collection of KEY-VALUE pairs that can be parsed by the java.util.Properties class.
      * https://mkyong.com/java/java-properties-file-examples/
      */
-    private void readMap(String path, Map map) {
+    private boolean readMap(String path, Map map) {
         File in = new File(path);
-        if(!in.exists()) return;
+        if(!in.exists()) return false;
 
         try {
             Properties properties = new Properties();
@@ -189,6 +186,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return true;
     }
 
     /**
@@ -436,35 +434,29 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
         return this.initiatorBackupInfo;
     }
 
+
+    public int getMaxMemory() {
+        return Integer.parseInt(this.memoryInfo.get("max"));
+    }
+
     public void setMaxMemory(int maxMemory) {
-        this.maxMemory = maxMemory;
-        this.saveMemory();
+        this.memoryInfo.put("max", Integer.toString(maxMemory));
+        saveMap(DISK_INFO_PATH, this.memoryInfo);
     }
 
     public int getUsedMemory() {
-        return this.usedMemory;
+        return Integer.parseInt(this.memoryInfo.get("used"));
     }
 
-    public void setUsedMemory(int usedMemory){
-        this.usedMemory = usedMemory;
-        this.saveMemory();
+    public void setUsedMemory(int memoryUsedByChunk){
+        this.memoryInfo.compute("used", (key, value) -> Integer.toString(Integer.parseInt(value) + memoryUsedByChunk));
+        saveMap(DISK_INFO_PATH, this.memoryInfo);
     }
 
     public int getAvailableStorage() {
-        return this.maxMemory -  this.usedMemory;
+        return this.getMaxMemory() -  this.getUsedMemory();
     }
 
-    private void saveMemory() {
-        Properties diskProperties = new Properties();
-        diskProperties.setProperty("used", Integer.toString(this.usedMemory));
-        diskProperties.setProperty("max", Integer.toString(this.maxMemory));
-
-        try {
-            diskProperties.store(new FileOutputStream(DISK_INFO_PATH), null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public ExecutorService getSenderExecutor() {
         return this.senderExecutor;

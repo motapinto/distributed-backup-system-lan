@@ -22,7 +22,8 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
     private final String serviceAccessPoint;
     private int usedMemory = INITIAL_MAX_MEMORY;
     private int maxMemory = INITIAL_MAX_MEMORY;
-    */
+
+
 
     public String FILE_STORAGE_PATH;
     public String REPLICATION_DEGREE_INFO_PATH;
@@ -464,5 +465,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
 
     public ExecutorService getReceiverExecutor() {
         return this.receiverExecutor;
+    }
+
+    public Semaphore getMutex() {
+        return mutex;
     }
 }

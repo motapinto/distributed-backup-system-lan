@@ -1,15 +1,15 @@
 package Peer;
 
 import java.io.IOException;
+import java.rmi.Remote;
 
-public interface PeerInterface  {
+public interface PeerInterface extends Remote {
 
     /**
      * Function used by the user to back-up a determined file
      *
      * @param pathname          : name of the file to backup - should be in the peer's files directories
      * @param replicationDegree : desired replication degree for the file
-     * @throws IOException
      */
     void backup(String pathname, int replicationDegree);
 
@@ -17,7 +17,6 @@ public interface PeerInterface  {
      * Function used by the user to restore a determined file
      *
      * @param pathname name of the file to restore - should be in the peer's files directories
-     * @throws IOException
      */
     void restore(String pathname);
 
@@ -34,7 +33,6 @@ public interface PeerInterface  {
      * storing chunks
      *
      * @param maxDiskSpace
-     * @throws IOException
      */
     void reclaim(int maxDiskSpace);
 

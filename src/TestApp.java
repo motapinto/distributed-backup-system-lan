@@ -1,6 +1,4 @@
 import Peer.PeerInterface;
-
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -28,8 +26,9 @@ public class TestApp {
 
     public void init() {
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost");
-            this.peer = (PeerInterface) registry.lookup(this.peerAccessPoint);
+            Registry registry = LocateRegistry.getRegistry("localhost", 2020);
+            PeerInterface peer = (PeerInterface) registry.lookup(this.peerAccessPoint);
+            this.peer = peer;
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -93,7 +93,7 @@ public class Delete {
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[1].equals(fileId)) {
-                file =  new File(Peer.FILE_STORAGE_PATH + "/" + key.split("_")[1] + "/" + key.split("_")[2]);
+                file =  new File(this.peer.FILE_STORAGE_PATH + "/" + key.split("_")[1] + "/" + key.split("_")[2]);
 
                 try {
                     this.peer.getMutex().acquire();
@@ -112,7 +112,7 @@ public class Delete {
             }
         }
 
-        File folder = new File(Peer.FILE_STORAGE_PATH + "/" + fileId);
+        File folder = new File(this.peer.FILE_STORAGE_PATH + "/" + fileId);
         folder.delete();
         this.peer.getInitiatorBackupInfo().remove(fileId);
     }

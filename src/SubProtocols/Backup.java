@@ -13,6 +13,7 @@ public class Backup {
     private int desiredRepDeg;
     private String pathName;
     private String fileId;
+    private int senderId;
 
     /**
      * Creates backup protocol
@@ -21,6 +22,7 @@ public class Backup {
      */
     public Backup(Peer peer){
         this.peer = peer;
+        this.senderId = this.peer.getId();
         this.pathName = null;
     }
 
@@ -32,6 +34,7 @@ public class Backup {
      */
     public Backup(Peer peer, String pathName, int desiredRepDeg){
         this.peer = peer;
+        this.senderId = this.peer.getId();
         this.desiredRepDeg = desiredRepDeg;
         this.pathName = pathName;
     }
@@ -93,7 +96,7 @@ public class Backup {
      * @param fileId  : file id of the file
      */
     public void sendPutChunkMessage(byte[] chunk, int chunkNo, String fileId) {
-        Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.peer.getId()),
+        Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.senderId),
                 fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
 
         this.peer.initiateRepDegreeInfo(request);
@@ -103,7 +106,7 @@ public class Backup {
         String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
         int repDeg =  Integer.parseInt(repDegString);
 
-        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= 5; tries++, sleepTime *= 2) {
+        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= PUTCHUNK_RETRIES; tries++, sleepTime *= 2) {
 
             this.peer.getSenderExecutor().submit(dispatcher);
 
@@ -152,7 +155,7 @@ public class Backup {
         }
 
         // Updates current system memory of the peer
-        this.peer.setCurrentSystemMemory(this.peer.getCurrentSystemMemory() + message.getBody().length);
+        this.peer.setUsedMemory(this.peer.getUsedMemory() + message.getBody().length);
     }
 
     /**
@@ -161,7 +164,7 @@ public class Backup {
      */
     public void sendStoredMessage(Message message) {
         try {
-            Thread.sleep((long)Math.random() * 400);
+            Thread.sleep((long)Math.random() * MAX_DELAY);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -171,5 +174,27 @@ public class Backup {
 
         Dispatcher dispatcher = new Dispatcher(this.peer, reply, this.peer.getControlChannel());
         this.peer.getSenderExecutor().submit(dispatcher);
+    }
+
+    public void setDesiredRepDeg(int desiredRepDeg) {
+        this.desiredRepDeg = desiredRepDeg;
+    }
+
+    public void setFileId(String fileId) {
+        this.fileId = fileId;
+    }
+
+    public void setSenderId(int senderId) { this.senderId = senderId; }
+
+    public String getFileId() {
+        return this.fileId;
+    }
+
+    public int getDesiredRepDeg() {
+        return this.desiredRepDeg;
+    }
+
+    public Peer getPeer() {
+        return this.peer;
     }
 }

@@ -77,7 +77,7 @@ public class Dispatcher implements Runnable{
                 this.peer.getBackup().startStoredProcedure(message);
                 break;
             case STORED:
-                this.peer.incrementRepDegreeInfo(message);
+                this.peer.updateRepDegreeInfo(message, true);
                 break;
             case GETCHUNK:
                 this.peer.getRestore().startChunkProcedure(message);
@@ -86,6 +86,7 @@ public class Dispatcher implements Runnable{
                 this.peer.getDelete().deleteFile(Integer.parseInt(this.message.getHeader().getSenderId()), this.message.getHeader().getFileId());
                 break;
             case REMOVED:
+                this.peer.getSpaceReclaim().updateChunkRepDegree(this.message);
                 break;
             case CHUNK:
                 System.out.println("The chunk as length: "  + message.getBody().length);
@@ -100,6 +101,8 @@ public class Dispatcher implements Runnable{
     public void sendMessageToChannel() {
         DatagramPacket packet;
         DatagramSocket socket;
+
+        System.out.println("Sent: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
 
         try {
             socket = new DatagramSocket();

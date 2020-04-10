@@ -464,9 +464,6 @@ public class Peer implements PeerInterface{
         return senderExecutor;
     }
 
-    public ExecutorService getDeliverExecutor() {
-        return deliverExecutor;
-    }
 
     public ExecutorService getReceiverExecutor() {
         return receiverExecutor;
@@ -481,13 +478,14 @@ public class Peer implements PeerInterface{
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer1.backup( FILE_STORAGE_PATH + "teste.PNG", 2);
-            //peer1.restore( FILE_STORAGE_PATH + "teste.PNG");
+            //peer1.backup( FILE_STORAGE_PATH + "/Teste.PNG", 2);
+            //System.out.println("lol");
+            peer1.restore( FILE_STORAGE_PATH + "/Teste.PNG");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer2.restore(FILE_STORAGE_PATH + "teste.PNG");
+            //peer2.restore(FILE_STORAGE_PATH + "teste.PNG");
         }
         else if(args[0].equals("3")){
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';

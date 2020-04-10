@@ -9,7 +9,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.SQLOutput;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import static java.lang.Thread.sleep;
@@ -50,7 +54,9 @@ public class Restore {
 
 
         File file = new File(this.pathName);
+        long newLastModified = file.lastModified();
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
+
 
         this.numberOfChunks = 0;
         int number = 0;
@@ -71,7 +77,7 @@ public class Restore {
 
         for(int i = 0; i < numberOfChunksAux; i++){
             if(this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + this.fileId + "_" + i) != null){
-                fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + this.fileId + "/" + i);
+                fileLocation = Paths.get(Peer.FILE_STORAGE_PATH + "/" + this.fileId + "/" + i);
                 data = new byte[0];
 
                 try {
@@ -104,6 +110,7 @@ public class Restore {
             }
         }
         reconstructFile();
+        file.setLastModified(newLastModified);
         this.peer.printMapBytes(this.chunks);
     }
 
@@ -113,12 +120,14 @@ public class Restore {
         try (FileOutputStream outputStream = new FileOutputStream(outputFile); ) {
 
             for(int i = 0; i < this.numberDistinctChunksReceived; i++){
-                outputStream.write(this.chunks.get(this.fileId + "_" + Integer.toString(i)));  //write the bytes
+                outputStream.write(this.chunks.get(this.fileId + "_" + i));  //write the bytes
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+
     }
 
 
@@ -152,7 +161,7 @@ public class Restore {
 
                 if(!this.peer.hasChunkBeenSent(fileId, chunkNo)) {
 
-                    Path fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + fileId + "/" + chunkNo);
+                    Path fileLocation = Paths.get(Peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo);
                     byte[] data = new byte[0];
 
                     try {
@@ -180,7 +189,7 @@ public class Restore {
 
     public void saveChunkProcedure(Message message) {
 
-        if (this.fileId != null && (message.getHeader().getFileId().equals(this.fileId))){
+        if ((message.getHeader().getFileId().equals(this.fileId))){
             if (chunks.get(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo()) == null) {
                 chunks.put(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo(), message.getBody());
                 this.numberDistinctChunksReceived++;

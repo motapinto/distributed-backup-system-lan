@@ -77,7 +77,7 @@ public class Restore {
 
         for(int i = 0; i < numberOfChunksAux; i++){
             if(this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + this.fileId + "_" + i) != null){
-                fileLocation = Paths.get(Peer.FILE_STORAGE_PATH + "/" + this.fileId + "/" + i);
+                fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + this.fileId + "/" + i);
                 data = new byte[0];
 
                 try {
@@ -161,7 +161,7 @@ public class Restore {
 
                 if(!this.peer.hasChunkBeenSent(fileId, chunkNo)) {
 
-                    Path fileLocation = Paths.get(Peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo);
+                    Path fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo);
                     byte[] data = new byte[0];
 
                     try {

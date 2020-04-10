@@ -183,6 +183,11 @@ public class SpaceReclaim {
 
             Backup backup = new Backup(this.peer, pathName, desiredRepDegree);
             backup.sendPutChunkMessage(chunk, Integer.parseInt(chunkNo), fileId);
+
+            // This guarantees that other peers can register in their storeChunkHistory and
+            // their replicationDegInfo that this peer has the chunk
+            Message stored = new Message(STORED, "1", Integer.toString(this.peer.getId()), fileId, chunkNo);
+            backup.sendStoredMessage(stored);
         }
     }
 

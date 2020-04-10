@@ -8,6 +8,7 @@ import static Common.Constants.*;
 
 import java.io.*;
 import java.util.Map;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +41,13 @@ public class Peer implements PeerInterface{
     private ExecutorService senderExecutor;
     private ExecutorService deliverExecutor;
     private ExecutorService receiverExecutor;
+
+    /**
+     * Holds information regarding if the chunk has been sent
+     * String is a par of fileId+chunkNo
+     * Boolean holds the current replication degree
+     */
+    private Map<String, Boolean> sentChunks = new ConcurrentHashMap<>();
 
     /**
      * String : "fileId_chuckNo"   |   String : "repDegree_desiredRepDegree"
@@ -212,9 +220,9 @@ public class Peer implements PeerInterface{
         this.backupInfo.put(this.backup.getFileId(), this.backup);
     }
 
-    public void restore(String pathname) {
+    public void restore(String pathname, String fileId) {
         this.restore = new Restore(this, pathname);
-        this.restore.startGetChunkProcedure();
+        this.restore.startRestoreFileProcedure(fileId);
     }
 
     /**
@@ -250,6 +258,16 @@ public class Peer implements PeerInterface{
         else {
             return null;
         }
+    }
+
+
+    public void addSentChunkInfo(String fileId, String chunkNo) {
+        this.sentChunks.put(fileId + chunkNo, true);
+    }
+
+
+    public boolean hasChunkBeenSent(String fileId, String chunkNo){
+        return this.sentChunks.get(fileId + "_" + chunkNo) != null;
     }
 
     /**
@@ -336,6 +354,12 @@ public class Peer implements PeerInterface{
         System.out.println("Information about peer storage capacity");
         System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getUsedMemory() + " KBytes");
         System.out.println("Amount of storage used to backup the chunks" + this.getUsedMemory() * 1000 + " KBytes");
+    }
+
+    public void printMapBytes(ConcurrentHashMap<String, byte[]> map){
+        for (String key : map.keySet()) {
+            System.out.println(key);
+        }
     }
 
     @Override
@@ -452,20 +476,19 @@ public class Peer implements PeerInterface{
     public static void main(String[] args) throws IOException {
         String[] serviceAccessPoint = {"sda", "sad"};
         String[] mcAddress = {"224.0.0.0", "4445"};
-        String[] mdbAddress = {"224.0.0.1", "4446"};
-        //String[] mdbAddress = {"224.0.0.1", "4446"};
+        String[] mdbAddress = {"224.0.0.3", "4446"};
         String[] mdrAddress = {"224.0.0.2", "4447"};
 
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.backup( FILE_STORAGE_PATH + "/1/" + "Teste.txt", 2);
-            //peer1.delete( FILE_STORAGE_PATH + "/1/" + "Teste.txt");
+            //peer1.backup( FILE_STORAGE_PATH + "teste.PNG", 2);
+            //peer1.restore( FILE_STORAGE_PATH + "teste.PNG", "4D669C49098382A74B1C07DD46C390E6F071B957BBA89C62186473BC0250705E");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer2.reclaim(0);
+            peer2.restore( FILE_STORAGE_PATH + "/2/" + "teste.PNG", "4D669C49098382A74B1C07DD46C390E6F071B957BBA89C62186473BC0250705E");
         }
         else if(args[0].equals("3")){
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '3';
@@ -476,5 +499,13 @@ public class Peer implements PeerInterface{
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '4';
             Peer peer4 = new Peer("1", "4", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
         }
+    }
+
+    public Map<String, Boolean> getSentChunks() {
+        return sentChunks;
+    }
+
+    public void removeChunkFromSentChunks(String fileId, String chuckNo) {
+        this.sentChunks.remove(fileId + "_" + chuckNo);
     }
 }

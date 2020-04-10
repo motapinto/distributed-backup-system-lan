@@ -111,8 +111,7 @@ public class Message {
 
             case CHUNK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4]);
-
-                this.body = new byte[bytes.length - this.header.toString().length()];
+                this.body = new byte[packetLength - this.header.toString().length()];
                 ByteArrayInputStream chunkInputStream = new ByteArrayInputStream(bytes);
                 chunkInputStream.skip(headerSize + 4);
                 chunkInputStream.read(this.body);
@@ -173,5 +172,9 @@ public class Message {
 
     public byte[] getBody() {
         return this.body;
+    }
+
+    public void setBody(byte[] data) {
+        this.body = data;
     }
 }

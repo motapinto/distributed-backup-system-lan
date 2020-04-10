@@ -1,0 +1,1 @@
+find . -type f -path "./src/*/*" -name "*.class" -exec rm -f {} \;

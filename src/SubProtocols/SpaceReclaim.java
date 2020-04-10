@@ -60,8 +60,8 @@ public class SpaceReclaim {
      *                    if false -> delete any chunk
      */
     public void delete(boolean firstTask) {
-        ConcurrentHashMap<String, String> repDegreeInfo = this.peer.getRepDegreeInfo();
-        ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
+        Map<String, String> repDegreeInfo = this.peer.getRepDegreeInfo();
+        Map<String, String> storedHistory = this.peer.getStoredChunkHistory();
 
         /* String(KEY) : "senderId_fileId_chuckNo"   |   String(VALUE) : "senderId" */
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
@@ -144,27 +144,22 @@ public class SpaceReclaim {
         String desRepDegree = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), false);
         String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
 
-        System.out.println("curr: " + currRepDegree);
-        System.out.println("desired: " + desRepDegree);
-        System.out.println("chunk id: " + chunkId);
-
-        ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
+        Map<String, String> storedHistory = this.peer.getStoredChunkHistory();
 
         // if it has the chunk stored and the currRepDegree is less than the desRepDegree
-        if(storedHistory.get(this.peer.getId() + "_" + chunkId) != null &&
-                Integer.parseInt(currRepDegree) < Integer.parseInt(desRepDegree)) {
-            this.startBackup(message, Integer.parseInt(desRepDegree));
-        }
+        if(storedHistory.get(this.peer.getId() + "_" + chunkId) != null && Integer.parseInt(currRepDegree) < Integer.parseInt(desRepDegree))
+            this.startBackup(chunkId, Integer.parseInt(desRepDegree));
     }
 
     /**
      * Starts again the backup protocol for a chunk if the current replication degree
      * is less than the desired one
-     * @param message : received message from Dispatcher with the REMOVED message
-     * @param desiredRepDegree : desiredRepDegree for the chunk
+     * @param chunkId
+     * @param desiredRepDegree
      */
-    public void startBackup(Message message, int desiredRepDegree) {
-        String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
+    public void startBackup(String chunkId, int desiredRepDegree) {
+        String fileId = chunkId.split("_")[0];
+        String chunkNo = chunkId.split("_")[1];
 
         try {
             Thread.sleep((long) (Math.random() * MAX_DELAY));
@@ -172,10 +167,8 @@ public class SpaceReclaim {
             e.printStackTrace();
         }
 
-        if(this.receivedPutChunks.get(chunkId) != null) {
-            ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
-
-            String pathName = Peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
+        if(this.receivedPutChunks.get(chunkId) == null) {
+            String pathName = Peer.FILE_STORAGE_PATH + "/" + fileId + "/" + chunkNo;
 
             File file = new File(pathName);
             InputStream inputFile;
@@ -189,7 +182,12 @@ public class SpaceReclaim {
             }
 
             Backup backup = new Backup(this.peer, pathName, desiredRepDegree);
-            backup.sendPutChunkMessage(chunk, Integer.parseInt(message.getHeader().getChuckNo()), message.getHeader().getFileId());
+            backup.sendPutChunkMessage(chunk, Integer.parseInt(chunkNo), fileId);
+
+            // This guarantees that other peers can register in their storeChunkHistory and
+            // their replicationDegInfo that this peer has the chunk
+            Message stored = new Message(STORED, "1", Integer.toString(this.peer.getId()), fileId, chunkNo);
+            backup.sendStoredMessage(stored);
         }
     }
 

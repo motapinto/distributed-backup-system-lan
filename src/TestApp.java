@@ -1,4 +1,6 @@
 import Peer.PeerInterface;
+
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -26,18 +28,21 @@ public class TestApp {
 
     public void init() {
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 2020);
+            Registry registry = LocateRegistry.getRegistry("localhost",2021);
+            System.out.println(this.peerAccessPoint);
             PeerInterface peer = (PeerInterface) registry.lookup(this.peerAccessPoint);
+
+
             this.peer = peer;
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void test() {
+    private void test() throws RemoteException {
         switch (this.protocol) {
             case "BACKUP":
-                assert this.operand2 != null;
+                System.out.println(this.operand1);
                 this.peer.backup(this.operand1, Integer.parseInt(this.operand2));
                 break;
             case "RESTORE":
@@ -55,7 +60,7 @@ public class TestApp {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws RemoteException {
         String peerAccessPoint = args[0];
         String protocol = args[1];
         String operand1 = args[2];

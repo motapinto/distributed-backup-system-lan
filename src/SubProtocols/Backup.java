@@ -53,6 +53,8 @@ public class Backup {
             e.printStackTrace();
         }
 
+
+
         int numNecessaryChunks = (int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
 
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {

@@ -9,12 +9,12 @@ import Message.Dispatcher;
 import Peer.Peer;
 
 import static Common.Constants.*;
-import static Common.Constants.PUTCHUNK_RETRIES;
 
 public class SpaceReclaim {
 
     private Peer peer;
     private int sizeToReclaim;
+    private Map<String, String> receivedPutChunks = new ConcurrentHashMap<>();
 
     /**
      * Creates restore protocol
@@ -160,47 +160,55 @@ public class SpaceReclaim {
     /**
      * Starts again the backup protocol for a chunk if the current replication degree
      * is less than the desired one
-     * @param message
-     * @param desiredRepDegree
+     * @param message : received message from Dispatcher with the REMOVED message
+     * @param desiredRepDegree : desiredRepDegree for the chunk
      */
     public void startBackup(Message message, int desiredRepDegree) {
+        String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
+
         try {
             Thread.sleep((long) (Math.random() * MAX_DELAY));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        //IF DURING THIS WAIT.....
+        if(this.receivedPutChunks.get(chunkId) != null) {
+            ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
+            String originalFileSender;
 
+            if(storedHistory.get(this.peer.getId() + "_" + chunkId) != null)
+                originalFileSender = storedHistory.get(this.peer.getId() + "_" + chunkId);
+            else
+                return;
 
+            String pathName = Peer.FILE_STORAGE_PATH + "/" + originalFileSender + "/" +
+                    message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
 
-        ConcurrentHashMap<String, String> storedHistory = this.peer.getStoredChunkHistory();
-        String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
-        String originalFileSender;
+            File file = new File(pathName);
+            InputStream inputFile = null;
+            byte[] chunk = null;
 
-        if(storedHistory.get(this.peer.getId() + "_" + chunkId) != null)
-            originalFileSender = storedHistory.get(this.peer.getId() + "_" + chunkId);
-        else
-            return;
+            try {
+                inputFile = new FileInputStream(file.getAbsolutePath());
+                chunk = inputFile.readAllBytes();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-        String pathName = Peer.FILE_STORAGE_PATH + "/" + originalFileSender + "/" +
-                message.getHeader().getFileId() + "/" + message.getHeader().getChuckNo();
-
-        File file = new File(pathName);
-        InputStream inputFile = null;
-        byte[] chunk = null;
-
-        try {
-            inputFile = new FileInputStream(file.getAbsolutePath());
-            chunk = inputFile.readAllBytes();
-        } catch (IOException e) {
-            e.printStackTrace();
+            Backup backup = new Backup(this.peer, pathName, desiredRepDegree);
+            backup.setSenderId(Integer.parseInt(originalFileSender));
+            backup.sendPutChunkMessage(chunk, Integer.parseInt(message.getHeader().getChuckNo()), message.getHeader().getFileId());
         }
+    }
 
-        //!ALEERT!
-        Backup backup = new Backup(this.peer, pathName, desiredRepDegree);
-        backup.setSenderId(Integer.parseInt(originalFileSender));
-        backup.sendPutChunkMessage(chunk, Integer.parseInt(message.getHeader().getChuckNo()), message.getHeader().getFileId());
+    /**
+     * Puts on the concurrent hash map the received PUTCHUNK
+     * @param message : PUTCHUNK message
+     */
+    public void storePutChunk(Message message) {
+        String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
+        if(this.receivedPutChunks.get(chunkId) != null)
+            this.receivedPutChunks.put(chunkId, chunkId);
     }
 }
 

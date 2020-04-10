@@ -74,6 +74,7 @@ public class Dispatcher implements Runnable{
         System.out.println("Received: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
+                this.peer.getSpaceReclaim().storePutChunk(message);
                 this.peer.getBackup().startStoredProcedure(message);
                 break;
             case STORED:

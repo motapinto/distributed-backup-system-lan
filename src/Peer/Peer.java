@@ -20,7 +20,7 @@ public class Peer implements PeerInterface{
     private final String[] serviceAccessPoint;
     private int currentSystemMemory;
 
-    public static String FILE_STORAGE_PATH = "../storage";
+    public static String FILE_STORAGE_PATH = "storage";
     public static final int MAX_SIZE = 64000000;
     public String REPLICATION_DEGREE_INFO_PATH;
     public String DISK_INFO_PATH ;
@@ -301,6 +301,12 @@ public class Peer implements PeerInterface{
         }
     }
 
+    public void printMapBytes(ConcurrentHashMap<String, byte[]> map){
+        for (String key : map.keySet()) {
+            System.out.println(key);
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if(o == this) return true;
@@ -395,14 +401,14 @@ public class Peer implements PeerInterface{
     public static void main(String[] args) throws IOException {
         String[] serviceAccessPoint = {"sda", "sad"};
         String[] mcAddress = {"224.0.0.0", "4445"};
-        String[] mdbAddress = {"224.0.0.1", "4446"};
+        String[] mdbAddress = {"224.0.0.3", "4446"};
         String[] mdrAddress = {"224.0.0.2", "4447"};
 
         if(args[0].equals("1")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '1';
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer1.backup( FILE_STORAGE_PATH + "/1/" + "teste.jpg", 1);
-            peer1.restore( FILE_STORAGE_PATH + "/1/" + "teste.jpg", "9620B0D6FB4092C35232A9E504C5BE413C33AF94481F19157800A1768EF5211D");
+            //peer1.backup( FILE_STORAGE_PATH + "/1/" + "teste.PNG", 2);
+            peer1.restore( FILE_STORAGE_PATH + "/1/" + "teste.PNG", "B8BB1D57F00A17E7F22D78A7A56F8AF025D55A745F075734515755F75DD7E43F");
         }
         else if(args[0].equals("2")) {
             FILE_STORAGE_PATH = FILE_STORAGE_PATH + '2';

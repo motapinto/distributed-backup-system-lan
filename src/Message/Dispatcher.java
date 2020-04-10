@@ -33,7 +33,6 @@ public class Dispatcher implements Runnable{
         this.peer = peer;
         this.message = new Message(packet);
         this.type = MessageType.RECEIVER;
-
     }
 
     /**
@@ -61,7 +60,6 @@ public class Dispatcher implements Runnable{
             case SENDER:
                 this.sendMessageToChannel();
                 break;
-
             default:
                 break;
         }
@@ -73,12 +71,14 @@ public class Dispatcher implements Runnable{
     public void receiveMessageFromChannel() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
         System.out.println("Received: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
+
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
                 this.peer.getBackup().startStoredProcedure(message);
                 break;
             case STORED:
                 this.peer.incrementRepDegreeInfo(message);
+                break;
             case GETCHUNK:
                 this.peer.getRestore().startChunkProcedure(message);
                 break;
@@ -88,7 +88,9 @@ public class Dispatcher implements Runnable{
             case REMOVED:
                 break;
             case CHUNK:
+                System.out.println("The chunk as length: "  + message.getBody().length);
                 this.peer.getRestore().saveChunkProcedure(message);
+                break;
         }
     }
 

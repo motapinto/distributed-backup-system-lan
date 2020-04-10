@@ -60,25 +60,23 @@ public class Restore {
 
         this.numberOfChunks = 0;
         int number = 0;
-        Path fileLocation;
-        byte[] data;
 
 
-        while(true){
-            if(this.peer.getRepDegreeInfo().get(this.fileId + "_" + number) != null){
+        Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
+        Map<String, String> storedHistory = peer.getStoredChunkHistory();
+
+        repDegreeInfo.forEach((key, value) -> {
+            if(key.split("_")[0].equals(fileId)) {
                 this.numberOfChunks++;
             }
-            else
-                break;
-            number++;
-        }
+        });
 
-        int numberOfChunksAux = this.numberOfChunks;
 
-        for(int i = 0; i < numberOfChunksAux; i++){
-            if(this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + this.fileId + "_" + i) != null){
-                fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + this.fileId + "/" + i);
-                data = new byte[0];
+        storedHistory.forEach((key, value) -> {
+            if(key.split("_")[1].equals(fileId)){
+                String chunkNo = key.split("_")[2];
+                Path fileLocation = Paths.get(this.peer.FILE_STORAGE_PATH + "/" + this.fileId + "/" + chunkNo);
+                byte[] data = new byte[0];
 
                 try {
                     data = Files.readAllBytes(fileLocation);
@@ -86,10 +84,11 @@ public class Restore {
                     e.printStackTrace();
                 }
 
-                this.chunks.put(this.fileId + "_" + i, data);
+                this.chunks.put(this.fileId + "_" + chunkNo, data);
                 this.numberOfChunks--;
+
             }
-        }
+        });
 
         System.out.println("Number of chunks necessary : " + this.numberOfChunks);
         this.GetChunksProcedure();

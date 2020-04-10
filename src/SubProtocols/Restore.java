@@ -9,14 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.SQLOutput;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import static java.lang.Thread.sleep;
 
 public class Restore {
 
@@ -151,8 +144,6 @@ public class Restore {
         String fileId = message.getHeader().getFileId();
         String chunkNo = message.getHeader().getChuckNo();
         Message chunkMessage;
-        String originalSenderPeerId;
-
 
         if(this.peer.getStoredChunkHistory().get(this.peer.getId() + "_" + fileId + "_" + chunkNo) != null){
             try {
@@ -180,11 +171,10 @@ public class Restore {
             }
 
         }
-        else{
+        else {
             System.out.println("received request for a chunk that i don't have");
         }
     }
-
 
     public void saveChunkProcedure(Message message) {
 
@@ -195,7 +185,6 @@ public class Restore {
             }
 
         } else {
-            System.out.println("entrei aqqui");
             peer.addSentChunkInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo());
         }
     }

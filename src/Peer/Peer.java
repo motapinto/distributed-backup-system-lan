@@ -16,14 +16,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
-public class Peer extends UnicastRemoteObject implements PeerInterface{
+public class Peer implements PeerInterface {
     private final String version;
     private int id;
     private final String serviceAccessPoint;
-    private int usedMemory = INITIAL_MAX_MEMORY;
-    private int maxMemory = INITIAL_MAX_MEMORY;
-
-
 
     public String FILE_STORAGE_PATH;
     public String REPLICATION_DEGREE_INFO_PATH;
@@ -82,14 +78,13 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
      */
     private Map<String, String> initiatorBackupInfo = new ConcurrentHashMap<>();
 
-
     
     /**
      * ConcurrentHashMap used to store the memory info
      */
     private Map<String, String> memoryInfo = new ConcurrentHashMap<>();
     public Peer(String version, String id, String serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
-        super();
+        //super();
 
         this.version = version;
         this.id = Integer.parseInt(id);
@@ -468,6 +463,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface{
     }
 
     public Semaphore getMutex() {
-        return mutex;
+        return this.mutex;
     }
 }

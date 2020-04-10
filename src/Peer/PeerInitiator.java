@@ -1,16 +1,12 @@
 package Peer;
 
-import java.rmi.RemoteException;
+import java.io.IOException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PeerInitiator {
 
     public PeerInitiator(String[] args) {
-
         String version = args[0];
         String peerId = args[1];
         String serviceAccessPoint = args[2];
@@ -18,12 +14,12 @@ public class PeerInitiator {
         String[] mdbAddress = {args[5], args[6]};
         String[] mdrAddress = {args[7], args[8]};
 
-        Peer peer = new Peer(version, peerId, serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-        Registry registry = null;
         try {
-            registry = LocateRegistry.getRegistry();
+            PeerInterface peer = new Peer(version, peerId, serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            Registry registry = LocateRegistry.createRegistry(2020);
+            //Registry registry = LocateRegistry.getRegistry();
             registry.rebind(serviceAccessPoint, peer);
-        } catch (RemoteException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

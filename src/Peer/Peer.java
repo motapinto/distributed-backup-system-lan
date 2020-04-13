@@ -313,9 +313,7 @@ public class Peer implements PeerInterface {
 
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null && this.repDegreeInfo.get(chunkId) != null){
             this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-            String currentRepDegree = Integer.toString(Integer.parseInt(this.getRepDegreeInfo(fileId, chunkNo, true)) + 1);
-            String desiredRepDegree = this.getRepDegreeInfo(fileId, chunkNo, false);
-            this.repDegreeInfo.put(chunkId, currentRepDegree + "_" + desiredRepDegree);
+            this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + Integer.parseInt(value.split("_")[1]));
             this.saveProperties();
         }
     }
@@ -472,4 +470,30 @@ public class Peer implements PeerInterface {
     public Semaphore getMutex() {
         return this.mutex;
     }
+
+    public static void main(String[] args) throws IOException {
+        String serviceAccessPoint = "sda";
+        String[] mcAddress = {"224.0.0.0", "4445"};
+        String[] mdbAddress = {"224.0.0.1", "4446"};
+        //String[] mdbAddress = {"224.0.0.1", "4446"};
+        String[] mdrAddress = {"224.0.0.2", "4447"};
+
+        if(args[0].equals("1")) {
+            Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            //peer1.backup( peer1.FILE_STORAGE_PATH + "/Teste.txt", 1);
+            peer1.delete( peer1.FILE_STORAGE_PATH + "/Teste.txt");
+        }
+        else if(args[0].equals("2")) {
+            Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            //peer2.reclaim(0);
+        }
+        else if(args[0].equals("3")){
+            Peer peer3 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+            //peer3.delete(peer3.FILE_STORAGE_PATH + "/Teste.txt");
+        }
+        else {
+            Peer peer4 = new Peer("1", "4", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
+        }
+    }
+
 }

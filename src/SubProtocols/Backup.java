@@ -1,8 +1,8 @@
 package SubProtocols;
 
+import Common.Logs;
 import Peer.Peer;
 import Message.*;
-import Common.*;
 import Common.Utilities;
 import static Common.Constants.*;
 
@@ -52,8 +52,6 @@ public class Backup {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
-
 
         int numNecessaryChunks = (int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
 
@@ -108,7 +106,7 @@ public class Backup {
         int repDeg =  Integer.parseInt(repDegString);
 
         for(int tries = 1; repDeg < this.desiredRepDeg && tries <= PUTCHUNK_RETRIES; tries++, sleepTime *= 2) {
-
+            System.out.println("tries: " + tries);
             this.peer.getSenderExecutor().submit(dispatcher);
 
             try {

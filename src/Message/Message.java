@@ -59,6 +59,7 @@ public class Message {
         this.header = new Header(messageType, version, senderId, fileId);
     }
 
+
     /**
      * Constructs Message for DELETEACK messages
      * <MessageType> <Version> <CRLF>
@@ -138,16 +139,13 @@ public class Message {
                 this.header = new Header(header[1], header[0], header[2], header[3]);
                 break;
 
+            case ENRESTORE:
+                this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5], header[6]);
+                break;
+
             default:
                 break;
         }
-    }
-
-    @Override
-    public String toString() {
-        String header = this.header.toString();
-        String body = new String(this.body);
-        return(this.body == null) ? header : header + body;
     }
 
     public String printBodyHex() {
@@ -187,4 +185,5 @@ public class Message {
     public void setBody(byte[] data) {
         this.body = data;
     }
+
 }

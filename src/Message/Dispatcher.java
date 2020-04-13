@@ -83,6 +83,7 @@ public class Dispatcher implements Runnable{
                     this.peer.removeDeleteHistory(message);
                 break;
             case GETCHUNK:
+            case ENRESTORE:
                 this.peer.getRestore().startChunkProcedure(message);
                 break;
             case DELETE:

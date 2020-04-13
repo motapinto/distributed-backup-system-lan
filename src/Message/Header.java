@@ -4,6 +4,8 @@ import static Common.Constants.CRLF;
 
 public class Header {
     private String chunkNo;
+    private String ip;
+    private String port;
     private final String version;
     private final String messageType;
     private String senderId;
@@ -64,6 +66,18 @@ public class Header {
         this.fileId = FileId.trim();
     }
 
+    public Header(String MessageType, String Version, String SenderId, String FileId, String ChunkNo, String ip, String port) {
+        this.messageType = MessageType.trim();
+        this.version = Version.trim();
+        this.senderId = SenderId.trim();
+        this.fileId = FileId.trim();
+        this.chunkNo = ChunkNo.trim();
+        this.ip = ip.trim();
+        this.port = port.trim();
+    }
+
+
+
     /**
      * Message header for DELETEACK messages
      * <MessageType> <Version> <CRLF>
@@ -75,6 +89,7 @@ public class Header {
         this.messageType = MessageType.trim();
         this.version = Version.trim();
     }
+
 
     @Override
     public String toString() {
@@ -121,4 +136,22 @@ public class Header {
     public String getReplicationDeg() {
         return replicationDeg;
     }
+
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
+    }
+
 }

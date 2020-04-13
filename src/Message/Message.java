@@ -142,7 +142,6 @@ public class Message {
             case DELETEACK:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4], true);
                 break;
-
             default:
                 break;
         }

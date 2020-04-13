@@ -367,7 +367,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             System.out.println("Backup service id of the file: " + backup.getPeer().getId());
             System.out.println("Desired replication degree: " + backup.getDesiredRepDeg());
 
-            System.out.println("Information about each file chunk:");
+            System.out.println("\nInformation about each file chunk:");
             for(Map.Entry<String, String> chunk : this.repDegreeInfo.entrySet()) {
                 String chunkId = chunk.getKey();
                 String repDegInfo = chunk.getValue();
@@ -378,7 +378,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             }
         }
 
-        System.out.println("Information about each stored chunk:");
+        System.out.println("\nInformation about each stored chunk:");
         for(Map.Entry<String, String> entry : this.storedChunkHistory.entrySet()) {
             String fileId = entry.getKey().split("_")[1] + entry.getKey().split("_")[2];
             System.out.println("Chunk id: " + entry.getKey().split("_")[1]);
@@ -386,20 +386,18 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             System.out.println("Perceived replication degree: " + entry.getValue().split("_")[0]);
         }
 
-        System.out.println("Information about peer storage capacity");
-        System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getUsedMemory() + " KBytes");
-        System.out.println("Amount of storage used to backup the chunks" + this.getUsedMemory() * 1000 + " KBytes");
+        System.out.println("\nInformation about peer storage capacity");
+        System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getUsedMemory() / 1000 + " KBytes");
+        System.out.println("Amount of storage used to backup the chunks: " + this.getUsedMemory() / 1000 + " KBytes");
     }
 
     /* Function for enhancement regarding DELETE protocol */
-    // info = fileId + "_" + peer id that needs to delete
     public void addDeleteHistory(String info, String peerToDelete) {
         this.deleteHistory.put(info, peerToDelete);
         this.saveMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
     }
 
     /* Function for enhancement regarding DELETE protocol */
-    // message = DELETEACK message
     public void removeDeleteHistory(Message message) {
         if(this.deleteHistory.containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId())) {
             this.deleteHistory.remove(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId());
@@ -462,7 +460,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.saveMap(this.REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
         }
     }
-
 
     public Map<String, String> getStoredChunkHistory() {
         return this.storedChunkHistory;

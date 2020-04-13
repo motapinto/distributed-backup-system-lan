@@ -72,8 +72,6 @@ public class Dispatcher implements Runnable{
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
         this.peer.getDelete().checkIfPeerNeedsToDelete(this.message.getHeader().getSenderId());
 
-        System.out.println("Received: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
-
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
                 this.peer.getSpaceReclaim().storePutChunk(message);
@@ -113,9 +111,6 @@ public class Dispatcher implements Runnable{
     public void sendMessageToChannel() {
         DatagramPacket packet;
         DatagramSocket socket;
-
-        System.out.println("Sent: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
-        System.out.println(message.getHeader());
 
         try {
             socket = new DatagramSocket();

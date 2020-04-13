@@ -70,6 +70,8 @@ public class Dispatcher implements Runnable{
      */
     public void receiveMessageFromChannel() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
+        this.peer.getDelete().checkIfPeerNeedsToDelete(this.message.getHeader().getSenderId());
+
         System.out.println("Received: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
 
         switch (this.message.getHeader().getMessageType()) {
@@ -86,9 +88,12 @@ public class Dispatcher implements Runnable{
                 this.peer.getRestore().startChunkProcedure(message);
                 break;
             case DELETE:
-                this.peer.getDelete().deleteFile(Integer.parseInt(this.message.getHeader().getSenderId()), this.message.getHeader().getFileId());
+                this.peer.getDelete().deleteFile(this.message.getHeader().getFileId());
                 if(!this.message.getHeader().getVersion().equals("1.0"))
-                    this.peer.addDeleteHistory(message);
+                    this.peer.getDelete().sendDeleteAckMessage(message.getHeader().getSenderId());
+            case DELETEACK:
+                if(Integer.parseInt(this.message.getHeader().getDestId()) == this.peer.getId())
+                    this.peer.removeDeleteHistory(message);
                 break;
             case REMOVED:
                 this.peer.getSpaceReclaim().updateChunkRepDegree(this.message);

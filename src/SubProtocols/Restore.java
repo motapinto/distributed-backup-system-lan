@@ -46,7 +46,6 @@ public class Restore {
 
     public void startRestoreFileProcedure(){
 
-
         File file = new File(this.pathName);
         long newLastModified = file.lastModified();
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
@@ -54,7 +53,6 @@ public class Restore {
 
         this.numberOfChunks = 0;
         int number = 0;
-
 
         Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
         Map<String, String> storedHistory = peer.getStoredChunkHistory();
@@ -104,7 +102,6 @@ public class Restore {
         }
         reconstructFile();
         file.setLastModified(newLastModified);
-        this.peer.printMapBytes(this.chunks);
     }
 
     public void reconstructFile(){

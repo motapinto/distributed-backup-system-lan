@@ -25,6 +25,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     public String DISK_INFO_PATH ;
     public String STORED_CHUNK_HISTORY_PATH;
     public String INITIATOR_BACKUP_INFO_PATH;
+    public String DELETE_ENHANCEMENT_INFO_PATH;
 
     private Semaphore mutex = new Semaphore(1);
 
@@ -99,6 +100,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         DISK_INFO_PATH = FILE_STORAGE_PATH + "/diskInfo.properties";
         STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/storedChunkHistory.properties";
         INITIATOR_BACKUP_INFO_PATH = FILE_STORAGE_PATH + "/initiatorBackupInfo.properties";
+        DELETE_ENHANCEMENT_INFO_PATH = FILE_STORAGE_PATH + "/deleteHistory.properties";
 
         this.setupFiles();
         this.readProperties();
@@ -322,15 +324,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.storedChunkHistory.remove(storedMessageHistoryId);
             this.saveProperties();
             return;
-
         }
 
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null) {
             if (this.repDegreeInfo.get(chunkId) != null) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-                System.out.println(chunkId + "=" + this.repDegreeInfo.get(chunkId));
                 this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
-                System.out.println(chunkId + "=" + this.repDegreeInfo.get(chunkId));
                 this.saveProperties();
             } else {
                 this.initiateRepDegreeInfo(message);
@@ -393,13 +392,18 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     /* Function for enhancement regarding DELETE protocol */
-    public void addDeleteHistory(Message message) {
-        this.deleteHistory.put(message.getHeader().getFileId(), message.getHeader().getFileId());
+    // info = fileId + "_" + peer id that needs to delete
+    public void addDeleteHistory(String info, String peerToDelete) {
+        this.deleteHistory.put(info, peerToDelete);
+        this.saveMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
     }
 
     /* Function for enhancement regarding DELETE protocol */
+    // message = DELETEACK message
     public void removeDeleteHistory(Message message) {
-        this.deleteHistory.remove(message.getHeader().getFileId());
+        if(this.deleteHistory.containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId()))
+            this.deleteHistory.remove(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId());
+        this.saveMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
     }
 
     /* Function for enhancement regarding DELETE protocol */
@@ -417,10 +421,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
     public int getId() {
         return id;
-    }
-
-    public String getServiceAccessPoint() {
-        return serviceAccessPoint;
     }
 
     public Channel getControlChannel() {
@@ -463,7 +463,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return this.initiatorBackupInfo;
     }
 
-
     public int getMaxMemory() {
         return Integer.parseInt(this.memoryInfo.get("max"));
     }
@@ -485,7 +484,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     public int getAvailableStorage() {
         return this.getMaxMemory() -  this.getUsedMemory();
     }
-
 
     public ExecutorService getSenderExecutor() {
         return this.senderExecutor;

@@ -14,6 +14,7 @@ public class Constants {
     public static final String REMOVED = "REMOVED";
     public static final String STORED = "STORED";
     public static final String DELETE = "DELETE";
+    public static final String DELETEACK = "DELETEACK";
 
     /* */
     public static final int MAX_DELAY = 400;

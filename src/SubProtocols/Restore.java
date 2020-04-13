@@ -69,7 +69,6 @@ public class Restore {
         this.restoreDone = false;
         this.numberOfChunks = 0;
 
-
         Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
         Map<String, String> storedHistory = peer.getStoredChunkHistory();
 

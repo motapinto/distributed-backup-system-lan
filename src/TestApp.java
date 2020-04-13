@@ -29,7 +29,6 @@ public class TestApp {
     public void init() {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            System.out.println(this.peerAccessPoint);
             PeerInterface peer = (PeerInterface) registry.lookup(this.peerAccessPoint);
             this.peer = peer;
         } catch (Exception e) {
@@ -40,7 +39,6 @@ public class TestApp {
     private void test() throws RemoteException {
         switch (this.protocol) {
             case "BACKUP":
-                System.out.println(this.operand1);
                 this.peer.backup(this.operand1, Integer.parseInt(this.operand2));
                 break;
             case "RESTORE":

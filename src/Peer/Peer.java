@@ -25,6 +25,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     public String DISK_INFO_PATH ;
     public String STORED_CHUNK_HISTORY_PATH;
     public String INITIATOR_BACKUP_INFO_PATH;
+    public String DELETE_ENHANCEMENT_INFO_PATH;
 
     private Semaphore mutex = new Semaphore(1);
 
@@ -99,6 +100,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         DISK_INFO_PATH = FILE_STORAGE_PATH + "/diskInfo.properties";
         STORED_CHUNK_HISTORY_PATH = FILE_STORAGE_PATH + "/storedChunkHistory.properties";
         INITIATOR_BACKUP_INFO_PATH = FILE_STORAGE_PATH + "/initiatorBackupInfo.properties";
+        DELETE_ENHANCEMENT_INFO_PATH = FILE_STORAGE_PATH + "/deleteHistory.properties";
 
         this.setupFiles();
         this.readProperties();
@@ -126,7 +128,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
         readMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
         readMap(INITIATOR_BACKUP_INFO_PATH, this.initiatorBackupInfo);
-
+        readMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
 
         if(!readMap(DISK_INFO_PATH, this.memoryInfo)){
             this.memoryInfo.put("used", "0");
@@ -322,15 +324,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.storedChunkHistory.remove(storedMessageHistoryId);
             this.saveProperties();
             return;
-
         }
 
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null) {
             if (this.repDegreeInfo.get(chunkId) != null) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-                System.out.println(chunkId + "=" + this.repDegreeInfo.get(chunkId));
                 this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
-                System.out.println(chunkId + "=" + this.repDegreeInfo.get(chunkId));
                 this.saveProperties();
             } else {
                 this.initiateRepDegreeInfo(message);
@@ -393,13 +392,19 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     /* Function for enhancement regarding DELETE protocol */
-    public void addDeleteHistory(Message message) {
-        this.deleteHistory.put(message.getHeader().getFileId(), message.getHeader().getFileId());
+    // info = fileId + "_" + peer id that needs to delete
+    public void addDeleteHistory(String info, String peerToDelete) {
+        this.deleteHistory.put(info, peerToDelete);
+        this.saveMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
     }
 
     /* Function for enhancement regarding DELETE protocol */
+    // message = DELETEACK message
     public void removeDeleteHistory(Message message) {
-        this.deleteHistory.remove(message.getHeader().getFileId());
+        if(this.deleteHistory.containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId())) {
+            this.deleteHistory.remove(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId());
+            this.saveMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
+        }
     }
 
     /* Function for enhancement regarding DELETE protocol */
@@ -417,10 +422,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
     public int getId() {
         return id;
-    }
-
-    public String getServiceAccessPoint() {
-        return serviceAccessPoint;
     }
 
     public Channel getControlChannel() {
@@ -455,14 +456,29 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return this.repDegreeInfo;
     }
 
+    public void removeRepDegreeInfo(String key) {
+        if(this.repDegreeInfo.containsKey(key)) {
+            this.repDegreeInfo.remove(key);
+            this.saveMap(this.REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+        }
+    }
+
+
     public Map<String, String> getStoredChunkHistory() {
         return this.storedChunkHistory;
     }
 
+    public void removeStoredChunkHistory(String key) {
+        if(this.storedChunkHistory.containsKey(key)) {
+            this.storedChunkHistory.remove(key);
+            this.saveMap(this.STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
+        }
+    }
+
+
     public Map<String, String> getInitiatorBackupInfo() {
         return this.initiatorBackupInfo;
     }
-
 
     public int getMaxMemory() {
         return Integer.parseInt(this.memoryInfo.get("max"));
@@ -486,7 +502,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return this.getMaxMemory() -  this.getUsedMemory();
     }
 
-
     public ExecutorService getSenderExecutor() {
         return this.senderExecutor;
     }
@@ -498,30 +513,4 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     public Semaphore getMutex() {
         return this.mutex;
     }
-
-    public static void main(String[] args) throws IOException {
-        String serviceAccessPoint = "sda";
-        String[] mcAddress = {"224.0.0.0", "4445"};
-        String[] mdbAddress = {"224.0.0.1", "4446"};
-        //String[] mdbAddress = {"224.0.0.1", "4446"};
-        String[] mdrAddress = {"224.0.0.2", "4447"};
-
-        if(args[0].equals("1")) {
-            Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            peer1.backup( peer1.FILE_STORAGE_PATH + "/Teste.txt", 1);
-            //peer1.delete( peer1.FILE_STORAGE_PATH + "/Teste.txt");
-        }
-        else if(args[0].equals("2")) {
-            Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer2.reclaim(0);
-        }
-        else if(args[0].equals("3")){
-            Peer peer3 = new Peer("1", "3", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer3.delete(peer3.FILE_STORAGE_PATH + "/Teste.txt");
-        }
-        else {
-            Peer peer4 = new Peer("1", "4", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-        }
-    }
-
 }

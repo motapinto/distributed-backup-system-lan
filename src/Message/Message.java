@@ -1,24 +1,22 @@
 package Message;
 
 import Common.Logs;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.nio.charset.StandardCharsets;
-
 import static Common.Constants.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.DatagramPacket;
+
 public class Message {
+
+    //enum for message type ->> later
 
     private Header header;
     byte[] body;
 
-
     /**
      * Constructs Message for PUTCHUNKS messages
-     * <MessageType> <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF>
+     * <Version> <MessageType> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF>
      *
      * @param messageType       indicates message type
      * @param version           indicates the version of the peer that sends the message
@@ -34,7 +32,7 @@ public class Message {
 
     /**
      * Constructs Message for STORED, REMOVED, CHUNK, and GETCHUNK messages
-     * <MessageType> <Version> <SenderId> <FileId> <ChunkNo><CRLF>
+     * <Version> <MessageType> <SenderId> <FileId> <ChunkNo> <CRLF>
      *
      * @param messageType indicates message type
      * @param version     indicates the version of the peer that sends the message
@@ -48,7 +46,7 @@ public class Message {
 
     /**
      * Constructs Message for DELETE messages
-     * <MessageType> <Version> <SenderId> <FileId> <CRLF>
+     * <Version> <MessageType> <SenderId> <FileId> <CRLF>
      *
      * @param messageType indicates message type
      * @param version     indicates the version of the peer that sends the message
@@ -62,13 +60,16 @@ public class Message {
 
     /**
      * Constructs Message for DELETEACK messages
-     * <MessageType> <Version> <CRLF>
+     * <Version> <MessageType> <SenderId> <FileId> <DestinationId> <CRLF>
      *
-     * @param messageType       indicates message type
-     * @param version           indicates the version of the peer that sends the message
+     * @param messageType indicates message type
+     * @param version     indicates the version of the peer that sends the message
+     * @param senderId    indicates the sender id
+     * @param fileId      indicates the file id
+     * @param destId      indicates the destination peer id
      */
-    public Message(String messageType, String version) {
-        this.header = new Header(messageType, version);
+    public Message(String messageType, String version, String senderId, String fileId, String destId, boolean isACK) {
+        this.header = new Header(messageType, version, senderId, fileId, destId, isACK);
     }
 
     /**
@@ -139,6 +140,9 @@ public class Message {
                 this.header = new Header(header[1], header[0], header[2], header[3]);
                 break;
 
+            case DELETEACK:
+                this.header = new Header(header[1], header[0], header[2], header[3], header[4], true);
+                break;
             case ENRESTORE:
                 this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5], header[6]);
                 break;
@@ -146,17 +150,6 @@ public class Message {
             default:
                 break;
         }
-    }
-
-    public String printBodyHex() {
-        if(this.body != null) {
-            StringBuilder builder = new StringBuilder();
-            for (byte byteC : this.body) {
-                builder.append(String.format("%02X", byteC));
-            }
-            return builder.toString();
-        }
-        return null;
     }
 
     public byte[] toBytes() {

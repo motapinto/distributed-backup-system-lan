@@ -15,12 +15,13 @@ public class Constants {
     public static final String STORED = "STORED";
     public static final String DELETE = "DELETE";
     public static final String ENRESTORE = "ENRESTORE";
+    public static final String DELETEACK = "DELETEACK";
 
 
     /* */
     public static final int MAX_DELAY = 400;
     public static final int INITIAL_MAX_MEMORY = 100000000; // 100MB
-    public static final int PUTCHUNK_RETRIES = 5;
+    public static final int MESSAGE_RETRIES = 5;
     public static final int MAX_CHUNK_SIZE = 64000; // 64 KB
     public static final int MAX_PACKET_SIZE = 64500; // 64 KB
     public static final int MAX_REPLICATION_DEGREE = 9;

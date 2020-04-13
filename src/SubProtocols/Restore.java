@@ -18,11 +18,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Restore {
 
+    public class MonitorObject{
+    }
+
     private Peer peer;
     private String pathName;
     private int numberOfChunks = 0;
     private int numberDistinctChunksReceived = 0;
     private String fileId;
+    private MonitorObject myMonitorObject = new MonitorObject();
 
 
 
@@ -62,6 +66,7 @@ public class Restore {
      * Starts the restore procedure, sending the GETCHUNK message to the channel
      */
     public void startRestoreFileProcedure(){
+
         File file = new File(this.pathName);
         long newLastModified = file.lastModified();
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
@@ -302,6 +307,8 @@ public class Restore {
                     System.out.println("estou parado aqui");
                     InputStream in = this.socket.getInputStream();
                     DataInputStream dis = new DataInputStream(in);
+
+
                     int len = dis.readInt();
                     byte[] data = new byte[len];
                     if (len > 0) {
@@ -310,13 +317,13 @@ public class Restore {
                     System.out.println("ESTOU AQUI CARAMBA ESTÁ A FUNCIONAR ACABEI DE RECEBER CHUNK");
                     Message requestMessage = new Message(data);
                     this.restore.saveChunkProcedure(requestMessage);
+
+
                 }
                 catch (Exception e){
                     e.printStackTrace();
                     e.printStackTrace();
                 }
-
-
             }
             try {
                 System.out.println("aqui");

@@ -40,5 +40,11 @@ public class Utilities {
             System.out.println(key + " " + map.get(key));
         }
     }
+
+    public void printMapBytes(ConcurrentHashMap<String, byte[]> map){
+        for (String key : map.keySet()) {
+            System.out.println(key);
+        }
+    }
 }
 

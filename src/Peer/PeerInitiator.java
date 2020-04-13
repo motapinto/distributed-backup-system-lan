@@ -39,7 +39,6 @@ public class PeerInitiator {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();
         }
-
     }
 
     public static void main(String[] args) {

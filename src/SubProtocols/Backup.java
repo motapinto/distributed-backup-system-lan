@@ -95,11 +95,8 @@ public class Backup {
      * @param fileId  : file id of the file
      */
     public void sendPutChunkMessage(byte[] chunk, int chunkNo, String fileId) {
-
-
         Message request = new Message(PUTCHUNK, this.peer.getVersion(), Integer.toString(this.senderId),
                 fileId, Integer.toString(chunkNo), Integer.toString(this.desiredRepDeg), chunk);
-
 
         int sleepTime = 1000;
         String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
@@ -111,7 +108,7 @@ public class Backup {
 
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
 
-        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= PUTCHUNK_RETRIES; tries++, sleepTime *= 2) {
+        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= MESSAGE_RETRIES; tries++, sleepTime *= 2) {
             System.out.println("tries: " + tries);
             this.peer.getSenderExecutor().submit(dispatcher);
 

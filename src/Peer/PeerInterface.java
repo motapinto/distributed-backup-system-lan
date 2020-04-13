@@ -1,6 +1,5 @@
 package Peer;
 
-import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -39,5 +38,5 @@ public interface PeerInterface extends Remote{
     /**
      * Prints the state.............................
      */
-    void state()throws RemoteException;;
+    void state() throws RemoteException;
 }

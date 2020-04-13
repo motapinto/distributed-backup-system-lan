@@ -191,13 +191,27 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      */
     public void saveMap(String path, Map map) {
         Properties properties = new Properties();
-        properties.putAll(map);
+
+        map.forEach((key, value) -> {
+
+            properties.put(key, value);
+
+        });
+
+
+
+        //properties.putAll(map);
 
         try {
-            properties.store(new FileOutputStream(path), null);
+            FileOutputStream fileOutputStream = new FileOutputStream(path);
+            properties.store(fileOutputStream, null);
+            fileOutputStream.close();
+           // properties.forEach((k, v) -> System.out.println("Key : " + k + ", Value : " + v));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     /**
@@ -205,8 +219,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      */
     private void saveProperties() {
         // Save chunks replication degree info
-        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
         this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
+        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+      //
     }
 
     /**
@@ -304,12 +319,19 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.storedChunkHistory.remove(storedMessageHistoryId);
             this.saveProperties();
             return;
+
         }
 
-        if(this.storedChunkHistory.get(storedMessageHistoryId) == null && this.repDegreeInfo.get(chunkId) != null){
-            this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-            this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + Integer.parseInt(value.split("_")[1]));
-            this.saveProperties();
+        if(this.storedChunkHistory.get(storedMessageHistoryId) == null) {
+            if (this.repDegreeInfo.get(chunkId) != null) {
+                this.storedChunkHistory.put(storedMessageHistoryId, senderId);
+                System.out.println(chunkId + "=" + this.repDegreeInfo.get(chunkId));
+                this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
+                System.out.println(chunkId + "=" + this.repDegreeInfo.get(chunkId));
+                this.saveProperties();
+            } else {
+                this.initiateRepDegreeInfo(message);
+            }
         }
     }
 
@@ -318,20 +340,20 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         String senderId = message.getHeader().getSenderId();
         String chunkNo = message.getHeader().getChuckNo();
         String desiredRepDegree = message.getHeader().getReplicationDeg();
+        String currentRepDegree;
 
-        if(this.repDegreeInfo.get(fileId + "_" + chunkNo) == null){
-            String currentRepDegree;
-
-            if(this.id == Integer.parseInt(senderId))
-                currentRepDegree = "0";
-            else {
-                currentRepDegree = "1";
-                this.storedChunkHistory.put(this.id + "_" + fileId + "_" + chunkNo, senderId);
-            }
-
-            this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
-            saveProperties();
+        if(this.id == Integer.parseInt(senderId)) {
+            currentRepDegree = "0";
         }
+
+        else {
+            currentRepDegree = "1";
+            this.storedChunkHistory.put(this.id + "_" + fileId + "_" + chunkNo, senderId);
+        }
+
+        this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
+        saveProperties();
+
     }
 
     public void state() {
@@ -367,11 +389,18 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         System.out.println("Amount of storage used to backup the chunks" + this.getUsedMemory() * 1000 + " KBytes");
     }
 
-    public void printMapBytes(ConcurrentHashMap<String, byte[]> map){
+    public void printMapBytes(Map<String, byte[]> map){
         for (String key : map.keySet()) {
             System.out.println(key);
         }
     }
+
+    public void printMapString(Map<String, String> map){
+        for (String key : map.keySet()) {
+            System.out.println(key + "-->" + map.get(key));
+        }
+    }
+
 
     public void removeChunkFromSentChunks(String fileId, String chuckNo) {
         this.sentChunks.remove(fileId + "_" + chuckNo);

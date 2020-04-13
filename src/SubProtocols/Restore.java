@@ -5,31 +5,26 @@ import Peer.Peer;
 import Message.*;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Restore {
 
-    public class MonitorObject{
-    }
+
 
     private Peer peer;
     private String pathName;
     private int numberOfChunks = 0;
     private int numberDistinctChunksReceived = 0;
     private String fileId;
-    private MonitorObject myMonitorObject = new MonitorObject();
-
-
-
+    private ServerSocket listener;
+    
     private Boolean tcpConnectionActive = false;
 
     //Map to store the chunkId = fileId + "_" + chunkNo and they key the bytes of that chunk
@@ -125,6 +120,16 @@ public class Restore {
         reconstructFile();
         file.setLastModified(newLastModified);
         this.restoreDone = true;
+
+        try {
+
+            this.listener.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("ACABEI");
+
+
     }
 
     public void reconstructFile(){
@@ -190,7 +195,6 @@ public class Restore {
                             } catch (UnknownHostException e) {
                                 e.printStackTrace();
                             }
-
                         }
 
                         try {
@@ -199,7 +203,7 @@ public class Restore {
                             }
                             try {
                                 this.dataOutStream.writeInt(chunkMessage.toBytes().length);
-                                System.out.println(chunkMessage.toBytes());
+
                                 this.dataOutStream.write(chunkMessage.toBytes());
                             }
                             catch (Exception e){
@@ -227,6 +231,15 @@ public class Restore {
         else {
             System.out.println("received request for a chunk that i don't have");
         }
+
+        try {
+            this.enhancedSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        this.tcpConnectionActive = false;
+
+
     }
 
 
@@ -255,12 +268,12 @@ public class Restore {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public class EnhacementRestore implements Runnable {
 
         private Restore restore;
-        private ServerSocket listener;
 
         public EnhacementRestore(Restore restore) {
             this.restore = restore;
@@ -269,22 +282,24 @@ public class Restore {
         public void run() {
             System.out.println("Connecting to socket");
             try {
-                this.listener = new ServerSocket(this.restore.getPeer().getRestoreChannel().getPort());
+                listener = new ServerSocket(this.restore.getPeer().getRestoreChannel().getPort());
+
                 System.out.println("Connected to socket");
                 while (true){
-                    Runnable requestHandler = new RequestHandler(this.listener.accept(), this.restore);
+                    Runnable requestHandler = new RequestHandler(listener.accept(), this.restore);
                     this.restore.peer.getReceiverExecutor().submit(requestHandler);
                     System.out.println("RECEIVED CHUNK");
                 }
             }
             catch (IOException e) {
                 try {
-                    this.listener.close();
+                    listener.close();
                     this.restore.setTcpConnectionActive(false);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
             }
+
 
         }
     }
@@ -301,32 +316,35 @@ public class Restore {
 
         public void run() {
 
-            while (!this.restore.isRestoreDone()) {
-                System.out.println("entrei no handler");
+            while(!this.restore.isRestoreDone()) {
+
                 try {
-                    System.out.println("estou parado aqui");
                     InputStream in = this.socket.getInputStream();
                     DataInputStream dis = new DataInputStream(in);
+                    this.socket.setSoTimeout(1000);
+                    try {
+                        int len = dis.readInt();
+                        byte[] data = new byte[len];
+                        if (len > 0) {
+                            dis.readFully(data);
+                        }
 
 
-                    int len = dis.readInt();
-                    byte[] data = new byte[len];
-                    if (len > 0) {
-                        dis.readFully(data);
+                        Message requestMessage = new Message(data);
+                        this.restore.saveChunkProcedure(requestMessage);
+                    } catch (SocketTimeoutException e) {
+
+                    } catch (EOFException e) {
+
                     }
-                    System.out.println("ESTOU AQUI CARAMBA ESTÁ A FUNCIONAR ACABEI DE RECEBER CHUNK");
-                    Message requestMessage = new Message(data);
-                    this.restore.saveChunkProcedure(requestMessage);
 
 
-                }
-                catch (Exception e){
-                    e.printStackTrace();
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+
             try {
-                System.out.println("aqui");
                 this.socket.close();
                 System.out.println("CLOSED SOCKET");
             } catch (IOException e) {

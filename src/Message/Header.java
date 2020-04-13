@@ -74,12 +74,14 @@ public class Header {
      * @param fileId      : indicates the file id
      * @param destId      : indicates the destination peer id
      */
-    public Header(String messageType, String senderId, String fileId, String destId, boolean isACK) {
+    public Header(String messageType, String version, String senderId, String fileId, String destId, boolean isACK) {
         this.messageType = messageType.trim();
+        this.version = version.trim();
         this.senderId = senderId.trim();
         this.fileId = fileId.trim();
         this.destId = destId;
     }
+
 
     @Override
     public String toString() {

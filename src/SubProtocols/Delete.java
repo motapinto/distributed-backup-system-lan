@@ -112,7 +112,7 @@ public class Delete {
      * Sends a DELETEACK message to all peers
      */
     public void sendDeleteAckMessage(String destId) {
-        Message ack = new Message(DELETEACK, Integer.toString(this.peer.getId()), this.fileId, destId, true);
+        Message ack = new Message(DELETEACK, "asd", Integer.toString(this.peer.getId()), this.fileId, destId, true);
         // 3 tries to make sure the message gets to all peers
         for(int i = 0; i < 3; i++) {
             Dispatcher dispatcher = new Dispatcher(this.peer, ack, this.peer.getControlChannel());

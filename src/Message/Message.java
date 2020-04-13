@@ -62,12 +62,13 @@ public class Message {
      * <Version> <MessageType> <SenderId> <FileId> <DestinationId> <CRLF>
      *
      * @param messageType indicates message type
+     * @param version     indicates the version of the peer that sends the message
      * @param senderId    indicates the sender id
      * @param fileId      indicates the file id
      * @param destId      indicates the destination peer id
      */
-    public Message(String messageType, String senderId, String fileId, String destId, boolean isACK) {
-        this.header = new Header(messageType, senderId, fileId, destId, isACK);
+    public Message(String messageType, String version, String senderId, String fileId, String destId, boolean isACK) {
+        this.header = new Header(messageType, version, senderId, fileId, destId, isACK);
     }
 
     /**

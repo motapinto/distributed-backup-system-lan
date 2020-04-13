@@ -28,7 +28,7 @@ public class TestApp {
 
     public void init() {
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost",2021);
+            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             System.out.println(this.peerAccessPoint);
             PeerInterface peer = (PeerInterface) registry.lookup(this.peerAccessPoint);
 

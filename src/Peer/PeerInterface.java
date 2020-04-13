@@ -12,21 +12,21 @@ public interface PeerInterface extends Remote{
      * @param pathname          : name of the file to backup - should be in the peer's files directories
      * @param replicationDegree : desired replication degree for the file
      */
-    String backup(String pathname, int replicationDegree) throws RemoteException;;
+    void backup(String pathname, int replicationDegree) throws RemoteException;;
 
     /**
      * Function used by the user to restore a determined file
      *
      * @param pathname name of the file to restore - should be in the peer's files directories
      */
-    String restore(String pathname) throws RemoteException;;
+    void restore(String pathname) throws RemoteException;;
 
     /**
      * Function used by the user to delete a determined file
      *
      * @param pathname name of the file to delete - should be in the peer's files directories
      */
-    String delete(String pathname) throws RemoteException;;
+    void delete(String pathname) throws RemoteException;;
 
     /**
      * Function used by the user to tell to a determined peer the maximum disk space used for
@@ -34,10 +34,10 @@ public interface PeerInterface extends Remote{
      *
      * @param maxDiskSpace
      */
-    String reclaim(int maxDiskSpace) throws RemoteException;;
+    void reclaim(int maxDiskSpace) throws RemoteException;;
 
     /**
      * Prints the state.............................
      */
-    String state()throws RemoteException;;
+    void state()throws RemoteException;;
 }

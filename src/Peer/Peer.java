@@ -7,6 +7,7 @@ import SubProtocols.*;
 import static Common.Constants.*;
 
 import java.io.*;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
-public class Peer implements PeerInterface {
+public class Peer extends UnicastRemoteObject implements PeerInterface {
     private final String version;
     private int id;
     private final String serviceAccessPoint;
@@ -212,14 +213,13 @@ public class Peer implements PeerInterface {
      * Client interface for executing backup protocol
      * @param pathName : path name of the file to be backed up
      * @param replicationDegree : desired replication degree for the file
-     * @return
      */
-    public String backup(String pathName, int replicationDegree) {
+    public void backup(String pathName, int replicationDegree) {
 
         System.out.println(pathName);
         if(replicationDegree > MAX_REPLICATION_DEGREE) {
             Logs.logError("Maximum replication Degree reached!");
-            return null;
+            return;
         }
 
         this.backup = new Backup(this, pathName, replicationDegree);
@@ -231,35 +231,30 @@ public class Peer implements PeerInterface {
 
         // Stores backup protocol to be used in state()
         this.backupInfo.put(this.backup.getFileId(), this.backup);
-        return null;
     }
 
-    public String restore(String pathname) {
+    public void restore(String pathname) {
         this.restore = new Restore(this, pathname);
         this.restore.startRestoreFileProcedure();
-        return null;
     }
 
     /**
      * The client shall specify the file to delete by its pathname
      * @param pathname name of the file to delete -> should be in the peer's files directories
      */
-    public String delete(String pathname) {
+    public void delete(String pathname) {
         this.delete = new Delete(this, pathname);
         this.delete.startDeleteProcedure();
-        return null;
     }
 
     /**
      * The client shall specify the maximum disk space in KBytes that can be used for storing chunks.
      * Thus, if maxDiskSpace = 0 => the peer shall reclaim all disk space previously allocated
      * @param maxDiskSpace
-     * @return
      */
-    public String reclaim(int maxDiskSpace) {
+    public void reclaim(int maxDiskSpace) {
         this.reclaim = new SpaceReclaim(this, maxDiskSpace);
         this.reclaim.startSpaceReclaimProcedure();
-        return null;
     }
 
     /** Returns desired/current replication degree for a pair (fileId, chuckNo) */
@@ -341,7 +336,7 @@ public class Peer implements PeerInterface {
         }
     }
 
-    public String state() {
+    public void state() {
         for(Map.Entry<String, Backup> entry : this.backupInfo.entrySet()) {
             String fileId = entry.getKey();
             Backup backup = entry.getValue();
@@ -372,7 +367,6 @@ public class Peer implements PeerInterface {
         System.out.println("Information about peer storage capacity");
         System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getUsedMemory() + " KBytes");
         System.out.println("Amount of storage used to backup the chunks" + this.getUsedMemory() * 1000 + " KBytes");
-        return null;
     }
 
     public void printMapBytes(ConcurrentHashMap<String, byte[]> map){

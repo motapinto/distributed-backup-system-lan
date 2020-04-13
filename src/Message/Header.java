@@ -100,6 +100,10 @@ public class Header {
             header += " " + this.replicationDeg;
         }
 
+        if(this.destId != null) {
+            header += " " + this.destId;
+        }
+
         header += " " + CRLF + CRLF;
 
         return header;

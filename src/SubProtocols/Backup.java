@@ -111,8 +111,7 @@ public class Backup {
 
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
 
-        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= PUTCHUNK_RETRIES; tries++, sleepTime *= 2) {
-            System.out.println("tries: " + tries);
+        for(int tries = 1; repDeg < this.desiredRepDeg && tries <= MESSAGE_RETRIES; tries++, sleepTime *= 2) {
             this.peer.getSenderExecutor().submit(dispatcher);
 
             try {

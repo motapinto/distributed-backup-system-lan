@@ -2,7 +2,6 @@ package Peer;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 
 public class PeerInitiator {
 
@@ -45,5 +44,4 @@ public class PeerInitiator {
     public static void main(String[] args) {
         PeerInitiator peer = new PeerInitiator(args);
     }
-
 }

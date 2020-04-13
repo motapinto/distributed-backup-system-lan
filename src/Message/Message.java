@@ -66,8 +66,8 @@ public class Message {
      * @param fileId      indicates the file id
      * @param destId      indicates the destination peer id
      */
-    public Message(String messageType, String senderId, String fileId, String destId, boolean isACK) {
-        this.header = new Header(messageType, senderId, fileId, destId, isACK);
+    public Message(String messageType, String version, String senderId, String fileId, String destId, boolean isACK) {
+        this.header = new Header(messageType, version, senderId, fileId, destId, isACK);
     }
 
     /**
@@ -138,6 +138,10 @@ public class Message {
                 this.header = new Header(header[1], header[0], header[2], header[3]);
                 break;
 
+            case DELETEACK:
+                this.header = new Header(header[1], header[0], header[2], header[3], header[4], true);
+                break;
+
             default:
                 break;
         }
@@ -146,8 +150,7 @@ public class Message {
     @Override
     public String toString() {
         String header = this.header.toString();
-        String body = new String(this.body);
-        return(this.body == null) ? header : header + body;
+        return header;
     }
 
     public String printBodyHex() {

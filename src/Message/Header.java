@@ -6,8 +6,8 @@ public class Header {
     private String chunkNo;
     private final String version;
     private final String messageType;
-    private final String senderId;
-    private final String fileId;
+    private String senderId;
+    private String fileId;
     private String replicationDeg;
 
     /**
@@ -62,6 +62,18 @@ public class Header {
         this.version = Version.trim();
         this.senderId = SenderId.trim();
         this.fileId = FileId.trim();
+    }
+
+    /**
+     * Message header for DELETEACK messages
+     * <MessageType> <Version> <CRLF>
+     *
+     * @param MessageType : indicates message type
+     * @param Version     : indicates the version of the peer that sends the message
+     */
+    public Header(String MessageType, String Version) {
+        this.messageType = MessageType.trim();
+        this.version = Version.trim();
     }
 
     @Override

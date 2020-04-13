@@ -76,12 +76,17 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      * ConcurrentHashMap used to store the initiator of the backup
      */
     private Map<String, String> initiatorBackupInfo = new ConcurrentHashMap<>();
-
     
     /**
      * ConcurrentHashMap used to store the memory info
      */
     private Map<String, String> memoryInfo = new ConcurrentHashMap<>();
+
+    /**
+     * ConcurrentHashMap used to store delete messages
+     */
+    private Map<String, String> deleteHistory = new ConcurrentHashMap<>();
+
     public Peer(String version, String id, String serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
         super();
 
@@ -288,11 +293,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         }
     }
 
-
     public void addSentChunkInfo(String fileId, String chunkNo) {
         this.sentChunks.put(fileId + chunkNo, true);
     }
-
 
     public boolean hasChunkBeenSent(String fileId, String chunkNo){
         return this.sentChunks.get(fileId + "_" + chunkNo) != null;
@@ -389,18 +392,20 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         System.out.println("Amount of storage used to backup the chunks" + this.getUsedMemory() * 1000 + " KBytes");
     }
 
-    public void printMapBytes(Map<String, byte[]> map){
-        for (String key : map.keySet()) {
-            System.out.println(key);
-        }
+    /* Function for enhancement regarding DELETE protocol */
+    public void addDeleteHistory(Message message) {
+        this.deleteHistory.put(message.getHeader().getFileId(), message.getHeader().getFileId());
     }
 
-    public void printMapString(Map<String, String> map){
-        for (String key : map.keySet()) {
-            System.out.println(key + "-->" + map.get(key));
-        }
+    /* Function for enhancement regarding DELETE protocol */
+    public void removeDeleteHistory(Message message) {
+        this.deleteHistory.remove(message.getHeader().getFileId());
     }
 
+    /* Function for enhancement regarding DELETE protocol */
+    public Map<String, String> getDeleteHistory() {
+        return this.deleteHistory;
+    }
 
     public void removeChunkFromSentChunks(String fileId, String chuckNo) {
         this.sentChunks.remove(fileId + "_" + chuckNo);
@@ -503,8 +508,8 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
         if(args[0].equals("1")) {
             Peer peer1 = new Peer("1", "1", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);
-            //peer1.backup( peer1.FILE_STORAGE_PATH + "/Teste.txt", 1);
-            peer1.delete( peer1.FILE_STORAGE_PATH + "/Teste.txt");
+            peer1.backup( peer1.FILE_STORAGE_PATH + "/Teste.txt", 1);
+            //peer1.delete( peer1.FILE_STORAGE_PATH + "/Teste.txt");
         }
         else if(args[0].equals("2")) {
             Peer peer2 = new Peer("1", "2", serviceAccessPoint, mcAddress, mdbAddress, mdrAddress);

@@ -60,6 +60,17 @@ public class Message {
     }
 
     /**
+     * Constructs Message for DELETEACK messages
+     * <MessageType> <Version> <CRLF>
+     *
+     * @param messageType       indicates message type
+     * @param version           indicates the version of the peer that sends the message
+     */
+    public Message(String messageType, String version) {
+        this.header = new Header(messageType, version);
+    }
+
+    /**
      * Constructs Message object from a DatagramPacket
      *
      * @param packet : DatagramPacket containing message
@@ -115,7 +126,6 @@ public class Message {
                 ByteArrayInputStream chunkInputStream = new ByteArrayInputStream(bytes);
                 chunkInputStream.skip(headerSize + 4);
                 chunkInputStream.read(this.body);
-
                 break;
 
             case GETCHUNK:
@@ -140,7 +150,7 @@ public class Message {
         return(this.body == null) ? header : header + body;
     }
 
-    public String printBodyHex(){
+    public String printBodyHex() {
         if(this.body != null) {
             StringBuilder builder = new StringBuilder();
             for (byte byteC : this.body) {

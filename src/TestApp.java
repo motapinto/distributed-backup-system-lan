@@ -31,8 +31,6 @@ public class TestApp {
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             System.out.println(this.peerAccessPoint);
             PeerInterface peer = (PeerInterface) registry.lookup(this.peerAccessPoint);
-
-
             this.peer = peer;
         } catch (Exception e) {
             e.printStackTrace();

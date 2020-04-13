@@ -90,7 +90,7 @@ public class Dispatcher implements Runnable{
             case DELETE:
                 this.peer.getDelete().deleteFile(this.message.getHeader().getFileId());
                 if(!this.message.getHeader().getVersion().equals("1.0"))
-                    this.peer.getDelete().sendDeleteAckMessage(message.getHeader().getSenderId());
+                    this.peer.getDelete().sendDeleteAckMessage(message.getHeader().getFileId(), message.getHeader().getSenderId());
             case DELETEACK:
                 if(Integer.parseInt(this.message.getHeader().getDestId()) == this.peer.getId())
                     this.peer.removeDeleteHistory(message);

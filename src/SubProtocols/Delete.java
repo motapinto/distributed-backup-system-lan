@@ -41,7 +41,8 @@ public class Delete {
      */
     public void startDeleteProcedure() {
         this.setFileId();
-        this.addStoredPeers();
+        if(!this.peer.getVersion().equals("1.0"))
+            this.addStoredPeers();
         this.sendDeleteMessage();
         this.deleteFile(this.fileId);
     }
@@ -77,7 +78,7 @@ public class Delete {
                 if(value.equals(id)) {
                     String fileId = key.split("_")[0];
                     Message request = new Message(DELETE, "1.1", Integer.toString(this.peer.getId()), fileId);
-                    for(int i = 0; i < 3; i++) {
+                    for(int i = 0; i < MESSAGE_RETRIES; i++) {
                         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
                         this.peer.getSenderExecutor().submit(dispatcher);
                         try {
@@ -97,7 +98,7 @@ public class Delete {
     public void sendDeleteMessage() {
         Message request = new Message(DELETE, this.peer.getVersion(), Integer.toString(this.peer.getId()), this.fileId);
         // 3 tries to make sure the message gets to all peers
-        for(int i = 0; i < 3; i++) {
+        for(int i = 0; i < MESSAGE_RETRIES; i++) {
             Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
             this.peer.getSenderExecutor().submit(dispatcher);
             try {
@@ -111,14 +112,14 @@ public class Delete {
     /**
      * Sends a DELETEACK message to all peers
      */
-    public void sendDeleteAckMessage(String destId) {
-        Message ack = new Message(DELETEACK, "asd", Integer.toString(this.peer.getId()), this.fileId, destId, true);
-        // 3 tries to make sure the message gets to all peers
-        for(int i = 0; i < 3; i++) {
+    public void sendDeleteAckMessage(String fileId, String destId) {
+        Message ack = new Message(DELETEACK, this.peer.getVersion(), Integer.toString(this.peer.getId()), fileId, destId, true);
+
+        for(int i = 0; i < MESSAGE_RETRIES; i++) {
             Dispatcher dispatcher = new Dispatcher(this.peer, ack, this.peer.getControlChannel());
             this.peer.getSenderExecutor().submit(dispatcher);
             try {
-                Thread.sleep(MAX_DELAY);
+                Thread.sleep((long) (MAX_DELAY * Math.random()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -137,8 +138,7 @@ public class Delete {
         for(Map.Entry<String, String> entry : repDegreeInfo.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[0].equals(fileId)) {
-                repDegreeInfo.remove(key);
-                peer.saveMap(peer.REPLICATION_DEGREE_INFO_PATH, repDegreeInfo);
+                this.peer.removeRepDegreeInfo(key);
             }
         }
 
@@ -147,17 +147,15 @@ public class Delete {
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[1].equals(fileId)) {
-                file =  new File(this.peer.FILE_STORAGE_PATH + "/" + key.split("_")[1] + "/" + key.split("_")[2]);
+                file =  new File(this.peer.FILE_STORAGE_PATH + "/" + fileId + "/" + key.split("_")[2]);
 
                 try {
                     this.peer.getMutex().acquire();
                     if(file.exists()) {
                         this.peer.setUsedMemory(-1 * (int) file.length());
-                        System.out.println("used memory: " + this.peer.getUsedMemory() + " -- size of the chunk: " + file.length());
                         file.delete();
-                        storedHistory.remove(key);
-                        peer.saveMap(peer.STORED_CHUNK_HISTORY_PATH, storedHistory);
                     }
+                    this.peer.removeStoredChunkHistory(key);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } finally {

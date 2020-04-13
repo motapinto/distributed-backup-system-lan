@@ -148,24 +148,6 @@ public class Message {
         }
     }
 
-    @Override
-    public String toString() {
-        String header = this.header.toString();
-        String body = new String(this.body);
-        return(this.body == null) ? header : header + body;
-    }
-
-    public String printBodyHex() {
-        if(this.body != null) {
-            StringBuilder builder = new StringBuilder();
-            for (byte byteC : this.body) {
-                builder.append(String.format("%02X", byteC));
-            }
-            return builder.toString();
-        }
-        return null;
-    }
-
     public byte[] toBytes() {
         byte[] messageHeaderBytes = this.header.toString().getBytes();
         byte[] messageBytes;

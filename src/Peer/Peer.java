@@ -128,7 +128,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
         readMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
         readMap(INITIATOR_BACKUP_INFO_PATH, this.initiatorBackupInfo);
-
+        readMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
 
         if(!readMap(DISK_INFO_PATH, this.memoryInfo)){
             this.memoryInfo.put("used", "0");
@@ -401,9 +401,10 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     /* Function for enhancement regarding DELETE protocol */
     // message = DELETEACK message
     public void removeDeleteHistory(Message message) {
-        if(this.deleteHistory.containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId()))
+        if(this.deleteHistory.containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId())) {
             this.deleteHistory.remove(message.getHeader().getFileId() + "_" + message.getHeader().getSenderId());
-        this.saveMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
+            this.saveMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
+        }
     }
 
     /* Function for enhancement regarding DELETE protocol */

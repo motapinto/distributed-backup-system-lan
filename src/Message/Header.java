@@ -4,7 +4,7 @@ import static Common.Constants.CRLF;
 
 public class Header {
     private String chunkNo;
-    private String version;
+    private final String version;
     private final String messageType;
     private String senderId;
     private String fileId;

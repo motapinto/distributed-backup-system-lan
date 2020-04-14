@@ -205,8 +205,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
         });
 
-
-
         //properties.putAll(map);
 
         try {

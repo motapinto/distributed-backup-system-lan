@@ -13,6 +13,7 @@ public class PeerInitiator {
         String[] mcAddress = {args[3], args[4]};
         String[] mdbAddress = {args[5], args[6]};
         String[] mdrAddress = {args[7], args[8]};
+
         // Programmatically set the value of the property java.rmi.server.codebase to the location of the codebase
         System.setProperty("java.rmi.server.codebase", "file:///C://Users/coman/Desktop/sdis1920-t6g06/production/sdis1920-t6g6/RMI/");
 

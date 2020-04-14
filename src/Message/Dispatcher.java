@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
+import Common.Logs;
 import Peer.Peer;
 import Channels.Channel;
 import static Common.Constants.*;
@@ -119,6 +120,7 @@ public class Dispatcher implements Runnable{
             packet = new DatagramPacket(buf, buf.length, InetAddress.getByName(this.address), this.port);
             socket.send(packet);
         } catch (IOException e) {
+            Logs.logError("Error while sending a message to a channel");
             e.printStackTrace();
         }
     }

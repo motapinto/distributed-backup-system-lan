@@ -6,11 +6,13 @@ import static Common.Constants.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 
 public class Message {
 
     private Header header;
     byte[] body;
+    private InetAddress ip;
 
     /**
      * Constructs Message for PUTCHUNKS messages
@@ -77,6 +79,7 @@ public class Message {
      */
     public Message(DatagramPacket packet) {
         try {
+            this.ip = packet.getAddress();
             this.parseMessage(packet.getData(), packet.getLength());
         } catch (IOException e) {
             Logs.logError("Error parsing message");
@@ -119,7 +122,6 @@ public class Message {
                 putchunkInputStream.skip(headerSize + 4);
                 putchunkInputStream.read(this.body);
                 break;
-
             case CHUNK:
                 this.header = new Header(header[0], header[1], header[2], header[3], header[4]);
                 this.body = new byte[packetLength - this.header.toString().length()];
@@ -127,29 +129,25 @@ public class Message {
                 chunkInputStream.skip(headerSize + 4);
                 chunkInputStream.read(this.body);
                 break;
-
             case GETCHUNK:
             case REMOVED:
             case STORED:
                 this.header = new Header(header[0], header[1], header[2], header[3], header[4]);
                 break;
-
             case DELETE:
                 this.header = new Header(header[0], header[1], header[2], header[3]);
                 break;
-
             case DELETEACK:
-                this.header = new Header(header[1], header[0], header[2], header[3], header[4], true);
+                this.header = new Header(header[0], header[1], header[2], header[3], header[4], true);
                 break;
-
             default:
                 break;
         }
     }
 
     /**
-     * jose guerra descreve
-     * @return
+     * Converts the entire message to bytes
+     * @return a byte array containing the message bytes
      */
     public byte[] toBytes() {
         byte[] messageHeaderBytes = this.header.toString().getBytes();
@@ -178,4 +176,11 @@ public class Message {
         this.body = data;
     }
 
+    public InetAddress getIp() {
+        return ip;
+    }
+
+    public void setIp(InetAddress ip) {
+        this.ip = ip;
+    }
 }

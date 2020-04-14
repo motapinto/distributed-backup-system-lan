@@ -78,12 +78,13 @@ public class Delete {
             this.peer.getDeleteHistory().forEach((key, value) -> {
                 if(value.equals(id)) {
                     String fileId = key.split("_")[0];
-                    Message request = new Message(DELETE, "1.1", Integer.toString(this.peer.getId()), fileId);
+                    Message request = new Message(DELETE, Integer.toString(this.peer.getId()), Integer.toString(this.peer.getId()), fileId);
+
                     for(int i = 0; i < MESSAGE_RETRIES; i++) {
                         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
                         this.peer.getSenderExecutor().submit(dispatcher);
                         try {
-                            Thread.sleep(MAX_DELAY);
+                            Thread.sleep((long) (MAX_DELAY * Math.random()));
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -98,12 +99,13 @@ public class Delete {
      */
     public void sendDeleteMessage() {
         Message request = new Message(DELETE, this.peer.getVersion(), Integer.toString(this.peer.getId()), this.fileId);
-        // 3 tries to make sure the message gets to all peers
+
         for(int i = 0; i < MESSAGE_RETRIES; i++) {
             Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
             this.peer.getSenderExecutor().submit(dispatcher);
+
             try {
-                Thread.sleep(MAX_DELAY);
+                Thread.sleep((long) (MAX_DELAY * Math.random()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -144,7 +146,6 @@ public class Delete {
         }
 
         File file;
-        /* String(KEY) : "senderId_fileId_chuckNo"   |   String(VALUE) : "senderId" */
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
             String key = entry.getKey();
             if(key.split("_")[1].equals(fileId)) {
@@ -167,6 +168,8 @@ public class Delete {
 
         File folder = new File(this.peer.FILE_STORAGE_PATH + "/" + fileId);
         folder.delete();
+
         this.peer.getInitiatorBackupInfo().remove(fileId);
+        this.peer.saveMap(this.peer.INITIATOR_BACKUP_INFO_PATH, this.peer.getInitiatorBackupInfo());
     }
 }

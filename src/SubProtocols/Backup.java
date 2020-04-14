@@ -139,17 +139,17 @@ public class Backup {
 
         if(!this.peer.getVersion().equals("1.0")) {
             try {
-                Thread.sleep((long) (Math.random() * MAX_DELAY));
+                Thread.sleep((long) (MAX_DELAY));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
             String currRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), true);
-            if(currRepDeg == null) return;
-            String desRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), false);
-
-            if(Integer.parseInt(currRepDeg) >= Integer.parseInt(desRepDeg))
-              return;
+            if(currRepDeg != null){
+                String desRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), false);
+                if (Integer.parseInt(currRepDeg) >= Integer.parseInt(desRepDeg))
+                    return;
+            }
         }
 
         this.peer.updateRepDegreeInfo(message, true);
@@ -187,7 +187,7 @@ public class Backup {
      */
     public void sendStoredMessage(Message message) {
         try {
-            Thread.sleep((long)Math.random() * MAX_DELAY);
+            Thread.sleep((long) (MAX_DELAY * Math.random()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -209,5 +209,9 @@ public class Backup {
 
     public Peer getPeer() {
         return this.peer;
+    }
+
+    public String getPathname() {
+        return this.pathName;
     }
 }

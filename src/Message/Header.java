@@ -1,11 +1,11 @@
 package Message;
 
+import java.net.InetAddress;
+
 import static Common.Constants.CRLF;
 
 public class Header {
     private String chunkNo;
-    private String ip;
-    private String port;
     private final String version;
     private final String messageType;
     private String senderId;
@@ -67,18 +67,6 @@ public class Header {
         this.fileId = fileId.trim();
     }
 
-    public Header(String MessageType, String Version, String SenderId, String FileId, String ChunkNo, String ip, String port) {
-        this.messageType = MessageType.trim();
-        this.version = Version.trim();
-        this.senderId = SenderId.trim();
-        this.fileId = FileId.trim();
-        this.chunkNo = ChunkNo.trim();
-        this.ip = ip.trim();
-        this.port = port.trim();
-    }
-
-
-
     /**
      * Message header for DELETEACK messages
      * <Version> <MessageType> <SenderId> <FileId> <DestId> <CRLF>
@@ -91,7 +79,6 @@ public class Header {
     public Header(String version, String messageType, String senderId, String fileId, String destId, boolean isACK) {
         this.version = version.trim();
         this.messageType = messageType.trim();
-        this.version = version.trim();
         this.senderId = senderId.trim();
         this.fileId = fileId.trim();
         this.destId = destId;
@@ -99,22 +86,17 @@ public class Header {
 
     @Override
     public String toString() {
-        String header = new String();
-
-        header += this.version + this.messageType;
+        String header = this.version + " " + this.messageType;
 
         if(this.senderId != null) {
             header += " " + this.senderId;
         }
-
         if(this.fileId != null) {
             header += " " + this.fileId;
         }
-
         if(this. chunkNo != null) {
             header += " " + this. chunkNo;
         }
-
         if(this.replicationDeg != null) {
             header += " " + this.replicationDeg;
         }
@@ -152,22 +134,6 @@ public class Header {
         return replicationDeg;
     }
 
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public String getPort() {
-        return port;
-    }
-
-    public void setPort(String port) {
-        this.port = port;
-    }
 
 
     public String getDestId() {

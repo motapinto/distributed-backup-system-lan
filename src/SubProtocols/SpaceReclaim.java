@@ -63,22 +63,18 @@ public class SpaceReclaim {
         Map<String, String> repDegreeInfo = this.peer.getRepDegreeInfo();
         Map<String, String> storedHistory = this.peer.getStoredChunkHistory();
 
-        /* String(KEY) : "senderId_fileId_chuckNo"   |   String(VALUE) : "senderId" */
         for(Map.Entry<String, String> entry : storedHistory.entrySet()) {
             String rawKey = entry.getKey();
 
             if(this.sizeToReclaim <= 0) return;
 
-            // chunkId = fileId + "_" + chunkNo
             String chunkId = rawKey.split("_")[1] + "_" + rawKey.split("_")[2];
 
-            // senderId_fileId_chunkNo
             int peerStorer = Integer.parseInt(rawKey.split("_")[0]);
 
             String currRepDeg = repDegreeInfo.get(chunkId).split("_")[0];
             String desRepDeg = repDegreeInfo.get(chunkId).split("_")[1];
 
-            // if current replication degree is greater than the desired replication degree
             if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
                 this.deleteChunk(chunkId);
             else if(!firstTask && peerStorer == this.peer.getId())
@@ -97,6 +93,7 @@ public class SpaceReclaim {
 
         int chunkSize = 0;
         File file = new File(pathName);
+
         if(file.exists()) {
             chunkSize = (int) file.length();
             file.delete();
@@ -162,7 +159,7 @@ public class SpaceReclaim {
         String chunkNo = chunkId.split("_")[1];
 
         try {
-            Thread.sleep((long) (Math.random() * MAX_DELAY));
+            Thread.sleep((long) (MAX_DELAY * Math.random()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

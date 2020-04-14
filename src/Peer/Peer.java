@@ -69,12 +69,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     private Map<String, String> storedChunkHistory = new ConcurrentHashMap<>();
 
     /**
-     * ConcurrentHashMap used in state() to store all backup information
+     * ConcurrentHashMap used in state() to store all backup information (only saves current state)
      */
     private Map<String, Backup> backupInfo = new ConcurrentHashMap<>();
 
     /**
-     * ConcurrentHashMap used to store the initiator of the backup
+     * ConcurrentHashMap used to store the initiator of the backup (need to be stored in non-volatile memory)
      */
     private Map<String, String> initiatorBackupInfo = new ConcurrentHashMap<>();
 
@@ -325,39 +325,50 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     public void state() {
+        System.out.println("\nInformation about each file whose backup it has initiated: ");
+        if(this.backupInfo.size() == 0) System.out.println("\tNone\n");
+
         for(Map.Entry<String, Backup> entry : this.backupInfo.entrySet()) {
             String fileId = entry.getKey();
             Backup backup = entry.getValue();
 
-            System.out.println("File pathname: " + this.FILE_STORAGE_PATH + "/" + fileId);
-            System.out.println("Backup service id of the file: " + backup.getPeer().getId());
-            System.out.println("Desired replication degree: " + backup.getDesiredRepDeg());
+            System.out.println("\tFile pathname: " + backup.getPathname());
+            System.out.println("\tBackup service id of the file: " + backup.getPeer().getId());
+            System.out.println("\tDesired replication degree: " + backup.getDesiredRepDeg());
 
             System.out.println("\nInformation about each file chunk:");
             for(Map.Entry<String, String> chunk : this.repDegreeInfo.entrySet()) {
                 String chunkId = chunk.getKey();
                 String repDegInfo = chunk.getValue();
 
-                System.out.println("ID: \t\t\t\t" + backup.getFileId() + chunkId.split("_")[1]);
-                System.out.println("Perceived replication degree: \t" + repDegInfo.split("_")[0]);
-                System.out.println("Desired replication degree: \t" + repDegInfo.split("_")[1]);
+                if(!chunkId.split("_")[0].equals(fileId)) continue;
+
+                System.out.println("\tID: \t\t\t\t\t\t\t\t" + chunkId);
+                System.out.println("\tPerceived replication degree: \t\t" + repDegInfo.split("_")[0]);
+                System.out.println("\tDesired replication degree: \t\t" + repDegInfo.split("_")[1]);
             }
         }
 
         System.out.println("\nInformation about each stored chunk: ");
+        boolean hasPrinted = false;
         for(Map.Entry<String, String> entry : this.storedChunkHistory.entrySet()) {
-            String fileId = entry.getKey().split("_")[1] + entry.getKey().split("_")[2];
-            System.out.println("Chunk id: " + entry.getKey().split("_")[1]);
-            //System.out.println("Chunk size: " + ); -> criar uma nova mensagem igual a storedmas com o tamanho??
-            System.out.println("Perceived replication degree: " + entry.getValue().split("_")[0]);
+            if(!entry.getKey().split("_")[0].equals(Integer.toString(this.id))) continue;
+            if(!hasPrinted) hasPrinted = true;
+            String chunkId = entry.getKey().split("_")[1] + "_"+  entry.getKey().split("_")[2];
+            System.out.println("\tChunk id: \t\t\t\t\t\t" + chunkId);
+            System.out.println("\tChunk size: \t\t\t\t\t" + this.getChunkSize(chunkId));
+            System.out.println("\tPerceived replication degree: \t" + entry.getValue().split("_")[0] + "\n");
         }
-        if(this.storedChunkHistory.size() == 0) {
-            System.out.println("None");
-        }
+        if(!hasPrinted) System.out.println("\tNone\n");
 
-        System.out.println("\nInformation about peer storage capacity");
-        System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getUsedMemory() / 1000 + " KBytes");
-        System.out.println("Amount of storage used to backup the chunks: " + this.getUsedMemory() / 1000 + " KBytes");
+        System.out.println("\nInformation about peer storage capacity:");
+        System.out.println("\tMaximum amount of disk space that can be used to store chunks: " + this.getMaxMemory() / 1000 + " KBytes");
+        System.out.println("\tAmount of storage used to backup the chunks: " + this.getUsedMemory() / 1000 + " KBytes");
+    }
+
+    public long getChunkSize(String chunkId) {
+        File file = new File(FILE_STORAGE_PATH + "/" + chunkId.split("_")[0] + "/" + chunkId.split("_")[1]);
+        return file.length();
     }
 
     /* Function for enhancement regarding DELETE protocol */

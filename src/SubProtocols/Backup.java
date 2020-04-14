@@ -211,4 +211,8 @@ public class Backup {
     public Peer getPeer() {
         return this.peer;
     }
+
+    public String getPathname() {
+        return this.pathName;
+    }
 }

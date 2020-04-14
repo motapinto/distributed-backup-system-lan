@@ -286,7 +286,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         if(!increment){
             String repDegInf = this.repDegreeInfo.get(chunkId);
             Integer newValue = Integer.parseInt(repDegInf.split("_")[0]) - 1;
-            this.repDegreeInfo.put(chunkId, newValue + "" + repDegInf.split("")[1]);
+            this.repDegreeInfo.put(chunkId, newValue + "_" + repDegInf.split("_")[1]);
             this.storedChunkHistory.remove(storedMessageHistoryId);
             this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
             this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
@@ -297,10 +297,10 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             if (this.repDegreeInfo.get(chunkId) != null) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
                 if(message.getHeader().getMessageType().equals(PUTCHUNK)){
-                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("")[0]) + 1) + "_" + message.getHeader().getReplicationDeg());
+                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + message.getHeader().getReplicationDeg());
                 }
                 else{
-                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("")[0]) + 1) + "_" + value.split("_")[1]);
+                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
                 }
                 this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
                 this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);

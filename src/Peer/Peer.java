@@ -353,6 +353,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.storedChunkHistory.put(this.id + "_" + fileId + "_" + chunkNo, senderId);
         }
 
+        if(desiredRepDegree == null){
+            desiredRepDegree = currentRepDegree;
+        }
         this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
         saveProperties();
 

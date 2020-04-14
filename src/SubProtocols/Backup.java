@@ -138,18 +138,19 @@ public class Backup {
             return;
 
         if(!this.peer.getVersion().equals("1.0")) {
+            System.out.println("Entrei aqui");
             try {
-                Thread.sleep((long) (Math.random() * MAX_DELAY));
+                Thread.sleep((long) (MAX_DELAY));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
             String currRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), true);
-            if(currRepDeg == null) return;
-            String desRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), false);
-
-            if(Integer.parseInt(currRepDeg) >= Integer.parseInt(desRepDeg))
-              return;
+            if(currRepDeg != null){
+                String desRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), false);
+                if (Integer.parseInt(currRepDeg) >= Integer.parseInt(desRepDeg))
+                    return;
+            }
         }
 
         this.peer.updateRepDegreeInfo(message, true);

@@ -2,6 +2,7 @@
 /workspace.xml
 /out/
 *.iws
+*.iml
 .idea/gradle.xml
 .idea/libraries
 .idea/workspace.xml

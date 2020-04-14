@@ -154,7 +154,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         new Thread(this.restoreChannel).start();
     }
 
-    private void setupExecutors(){
+    private void setupExecutors() {
         this.senderExecutor = Executors.newFixedThreadPool(5);
         this.receiverExecutor = Executors.newFixedThreadPool(10);
     }

@@ -138,7 +138,6 @@ public class Backup {
             return;
 
         if(!this.peer.getVersion().equals("1.0")) {
-            System.out.println("Entrei aqui");
             try {
                 Thread.sleep((long) (MAX_DELAY));
             } catch (InterruptedException e) {

@@ -168,6 +168,9 @@ public class Delete {
 
         File folder = new File(this.peer.FILE_STORAGE_PATH + "/" + fileId);
         folder.delete();
+
         this.peer.getInitiatorBackupInfo().remove(fileId);
+        this.peer.saveMap(this.peer.INITIATOR_BACKUP_INFO_PATH, this.peer.getInitiatorBackupInfo());
+
     }
 }

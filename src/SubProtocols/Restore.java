@@ -98,7 +98,7 @@ public class Restore {
                 }
 
                 this.chunks.put(this.fileId + "_" + chunkNo, data);
-                this.numberOfChunks--;
+                this.numberDistinctChunksReceived++;
 
             }
         });
@@ -112,19 +112,27 @@ public class Restore {
             this.getChunksProcedure();
             try {
                 Thread.sleep(3000);
-            } catch (InterruptedException e) {
+                System.out.println("After sleep");
+                System.out.println("Received : " + this.numberDistinctChunksReceived);
+                System.out.println("Necessary : " + this.numberOfChunks);
+            }
+            catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
-        reconstructFile();
-        file.setLastModified(newLastModified);
+        if(numberOfChunks != 0) {
+            reconstructFile();
+            file.setLastModified(newLastModified);
+        }
         this.restoreDone = true;
 
-        try {
-            this.listener.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(this.peer.getVersion().equals("1.1")) {
+            try {
+                this.listener.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -154,6 +162,7 @@ public class Restore {
         Message message;
         for(int i = 0; i <  this.numberOfChunks; i++){
            if(this.chunks.get(this.fileId + "_" + i) == null){
+               System.out.println("NEED CHUNKNO " + i);
                message = new Message("GETCHUNK", this.peer.getVersion(), Integer.toString(this.peer.getId()), this.fileId, Integer.toString(i));
                dispatcher = new Dispatcher(this.peer, message, this.peer.getControlChannel());
                this.peer.getSenderExecutor().submit(dispatcher);
@@ -191,14 +200,15 @@ public class Restore {
                         try {
                             while (enhancedSocket.getInputStream().available() != 0) {
                             }
-                            try {
+                            try { System.out.println("SENDING CHUNK" + chunkMessage.getHeader().getChuckNo());
                                 this.dataOutStream.writeInt(chunkMessage.toBytes().length);
-
                                 this.dataOutStream.write(chunkMessage.toBytes());
+                                System.out.println("SENT CHUNK" + chunkMessage.getHeader().getChuckNo());
                             }
                             catch (Exception e){
                                 System.out.println(e.getMessage());
                             }
+
 
                         } catch (IOException e) {
                             System.out.println(e.getMessage());
@@ -297,6 +307,7 @@ public class Restore {
                 while (true){
                     Runnable requestHandler = new RequestHandler(listener.accept(), this.restore);
                     this.restore.peer.getReceiverExecutor().submit(requestHandler);
+                    System.out.println("OPEN SOCKET");
                 }
             }
             catch (IOException e) {
@@ -330,7 +341,6 @@ public class Restore {
                 try {
                     InputStream in = this.socket.getInputStream();
                     DataInputStream dis = new DataInputStream(in);
-                    this.socket.setSoTimeout(1000);
                     try {
 
                         int len = dis.readInt();
@@ -342,11 +352,10 @@ public class Restore {
 
                         Message requestMessage = new Message(data);
                         this.restore.saveChunkProcedure(requestMessage);
-                    } catch (SocketTimeoutException e) {
-
-                    } catch (EOFException e) {
-
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
                     }
+
 
 
                 } catch (Exception e) {
@@ -355,6 +364,7 @@ public class Restore {
             }
 
             try {
+                System.out.println("CLOSED SOCKET");
                 this.socket.close();
             } catch (IOException e) {
                 e.printStackTrace();

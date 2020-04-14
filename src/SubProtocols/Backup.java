@@ -139,7 +139,7 @@ public class Backup {
 
         if(!this.peer.getVersion().equals("1.0")) {
             try {
-                Thread.sleep((long) (MAX_DELAY));
+                Thread.sleep((long) Math.random() *  MAX_DELAY);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -139,10 +139,7 @@ public class Message {
                 break;
 
             case DELETEACK:
-                this.header = new Header(header[0], header[1], header[2], header[3], header[4], true);
-                break;
-            case ENRESTORE:
-                this.header = new Header(header[1], header[0], header[2], header[3], header[4], header[5], header[6]);
+                this.header = new Header(header[1], header[0], header[2], header[3], header[4], true);
                 break;
 
             default:

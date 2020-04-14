@@ -237,8 +237,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      * @param replicationDegree : desired replication degree for the file
      */
     public void backup(String pathName, int replicationDegree) {
-
-        System.out.println(pathName);
         if(replicationDegree > MAX_REPLICATION_DEGREE) {
             Logs.logError("Maximum replication Degree reached!");
             return;

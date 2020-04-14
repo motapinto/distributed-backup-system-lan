@@ -92,6 +92,7 @@ public class Header {
     public Header(String version, String messageType, String senderId, String fileId, String destId, boolean isACK) {
         this.version = version.trim();
         this.messageType = messageType.trim();
+        this.version = version.trim();
         this.senderId = senderId.trim();
         this.fileId = fileId.trim();
         this.destId = destId;
@@ -99,17 +100,22 @@ public class Header {
 
     @Override
     public String toString() {
-        String header = this.version + " " + this.messageType;
+        String header = new String();
+
+        header += this.version + this.messageType;
 
         if(this.senderId != null) {
             header += " " + this.senderId;
         }
+
         if(this.fileId != null) {
             header += " " + this.fileId;
         }
+
         if(this. chunkNo != null) {
             header += " " + this. chunkNo;
         }
+
         if(this.replicationDeg != null) {
             header += " " + this.replicationDeg;
         }

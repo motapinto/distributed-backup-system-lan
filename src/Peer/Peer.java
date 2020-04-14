@@ -18,7 +18,6 @@ import java.util.concurrent.Semaphore;
 public class Peer extends UnicastRemoteObject implements PeerInterface {
     private final String version;
     private int id;
-    private final String serviceAccessPoint;
 
     public String FILE_STORAGE_PATH;
     public String REPLICATION_DEGREE_INFO_PATH;
@@ -52,13 +51,14 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     private Map<String, Boolean> sentChunks = new ConcurrentHashMap<>();
 
     /**
-     * String : "fileId_chuckNo"   |   String : "repDegree_desiredRepDegree"
-     * The necessity of the ConcurrentHashMap comes from the fact that HashMap is not thread-safe, HashTable does not
-     * permit concurrency when accessing data (single-lock) and ConcurrentHashMap is more efficient for threaded applications
+     * Holds information regarding each chuck id and the corresponding current and desired replication degree
+     * String(value) is a pair of fileId_chuckNo
+     * String(key) is a pair of repDegree_desiredRepDegree
      */
     private Map<String, String> repDegreeInfo = new ConcurrentHashMap<>();
 
     /**
+     * MUDAR ESTE COMENTARIOOOOOOOOOOOOooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
      * String : "senderId_fileId_chuckNo_size"   |   String : "senderId"
      * if senderId(key) == senderId(value) -> received STORED message
      * else {
@@ -69,15 +69,15 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     private Map<String, String> storedChunkHistory = new ConcurrentHashMap<>();
 
     /**
-     * ConcurrentHashMap used in state() to store all backup information
+     * ConcurrentHashMap used in state() to store all backup information (only saves current state)
      */
     private Map<String, Backup> backupInfo = new ConcurrentHashMap<>();
 
     /**
-     * ConcurrentHashMap used to store the initiator of the backup
+     * ConcurrentHashMap used to store the initiator of the backup (need to be stored in non-volatile memory)
      */
     private Map<String, String> initiatorBackupInfo = new ConcurrentHashMap<>();
-    
+
     /**
      * ConcurrentHashMap used to store the memory info
      */
@@ -88,12 +88,11 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      */
     private Map<String, String> deleteHistory = new ConcurrentHashMap<>();
 
-    public Peer(String version, String id, String serviceAccessPoint, String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
+    public Peer(String version, String id, String[] mcAddress, String[] mdbAddress, String[] mdrAddress) throws IOException {
         super();
 
         this.version = version;
         this.id = Integer.parseInt(id);
-        this.serviceAccessPoint = serviceAccessPoint;
 
         FILE_STORAGE_PATH = "storage" + this.id;
         REPLICATION_DEGREE_INFO_PATH = FILE_STORAGE_PATH + "/replicationDegreeInfo.properties";
@@ -117,12 +116,13 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         if(!dir.exists()) {
             boolean mkdirs = dir.mkdirs();
             if(!mkdirs)
-                System.out.println("Error creating directory storage" + this.id);
+                Logs.logError("Error creating directory storage for peer " + this.id);
         }
     }
 
     /**
      * Reads all properties files
+     * A .properties file is a simple collection of KEY-VALUE pairs that can be parsed by the java.util.Properties class.
      */
     private void readProperties() {
         readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
@@ -133,7 +133,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         if(!readMap(DISK_INFO_PATH, this.memoryInfo)){
             this.memoryInfo.put("used", "0");
             this.memoryInfo.put("max", Integer.toString(INITIAL_MAX_MEMORY));
-            saveMap(DISK_INFO_PATH, this.memoryInfo);
+            this.saveMap(DISK_INFO_PATH, this.memoryInfo);
         }
     }
 
@@ -154,17 +154,11 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         new Thread(this.restoreChannel).start();
     }
 
-    /**
-     * Comment...
-     */
     private void setupExecutors(){
         this.senderExecutor = Executors.newFixedThreadPool(5);
         this.receiverExecutor = Executors.newFixedThreadPool(10);
     }
 
-    /**
-     * Create all 4 protocols
-     */
     private void createProtocols() {
         this.backup = new Backup(this);
         this.delete = new Delete(this);
@@ -172,11 +166,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         this.reclaim = new SpaceReclaim(this);
     }
 
-    /**
-     * Reads all properties files and stores it on a map
-     * A .properties file is a simple collection of KEY-VALUE pairs that can be parsed by the java.util.Properties class.
-     * https://mkyong.com/java/java-properties-file-examples/
-     */
     private boolean readMap(String path, Map map) {
         File in = new File(path);
         if(!in.exists()) return false;
@@ -191,42 +180,17 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return true;
     }
 
-    /**
-     * Saves all maps into properties files
-     * A .properties file is a simple collection of KEY-VALUE pairs that can be parsed by the java.util.Properties class.
-     * https://mkyong.com/java/java-properties-file-examples/
-     */
     public void saveMap(String path, Map map) {
         Properties properties = new Properties();
-
-        map.forEach((key, value) -> {
-
-            properties.put(key, value);
-
-        });
-
-        //properties.putAll(map);
+        properties.putAll(map);
 
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(path);
             properties.store(fileOutputStream, null);
             fileOutputStream.close();
-           // properties.forEach((k, v) -> System.out.println("Key : " + k + ", Value : " + v));
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-    }
-
-    /**
-     * Reads all properties files regarding chunks replication degree
-     */
-    private void saveProperties() {
-        // Save chunks replication degree info
-        this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
-        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
-      //
     }
 
     /**
@@ -235,8 +199,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      * @param replicationDegree : desired replication degree for the file
      */
     public void backup(String pathName, int replicationDegree) {
-
-        System.out.println(pathName);
         if(replicationDegree > MAX_REPLICATION_DEGREE) {
             Logs.logError("Maximum replication Degree reached!");
             return;
@@ -253,6 +215,10 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         this.backupInfo.put(this.backup.getFileId(), this.backup);
     }
 
+    /**
+     * The client shall specify the file to restore by its pathname
+     * @param pathname pathname of the file to restore
+     */
     public void restore(String pathname) {
         this.restore = new Restore(this, pathname);
         this.restore.startRestoreFileProcedure();
@@ -260,7 +226,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
     /**
      * The client shall specify the file to delete by its pathname
-     * @param pathname name of the file to delete -> should be in the peer's files directories
+     * @param pathname pathname of the file to delete
      */
     public void delete(String pathname) {
         this.delete = new Delete(this, pathname);
@@ -285,12 +251,10 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         if(getCurrent) index = 0;
         else index = 1;
 
-        if(this.repDegreeInfo.containsKey(chunkId)) {
+        if(this.repDegreeInfo.containsKey(chunkId))
             return this.repDegreeInfo.get(chunkId).split("_")[index];
-        }
-        else {
+        else
             return null;
-        }
     }
 
     public void addSentChunkInfo(String fileId, String chunkNo) {
@@ -321,20 +285,16 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             Integer newValue = Integer.parseInt(repDegInf.split("_")[0]) - 1;
             this.repDegreeInfo.put(chunkId, newValue + "_" + repDegInf.split("_")[1]);
             this.storedChunkHistory.remove(storedMessageHistoryId);
-            this.saveProperties();
+            this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
             return;
         }
 
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null) {
             if (this.repDegreeInfo.get(chunkId) != null) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-                if(message.getHeader().getMessageType().equals(PUTCHUNK)) {
-                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + message.getHeader().getReplicationDeg());
-                }
-                else{
-                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
-                }
-                this.saveProperties();
+                this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
+                this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+                this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
             } else {
                 this.initiateRepDegreeInfo(message);
             }
@@ -348,57 +308,67 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         String desiredRepDegree = message.getHeader().getReplicationDeg();
         String currentRepDegree;
 
-        if(this.id == Integer.parseInt(senderId)) {
+        if(this.id == Integer.parseInt(senderId))
             currentRepDegree = "0";
-        }
 
         else {
             currentRepDegree = "1";
             this.storedChunkHistory.put(this.id + "_" + fileId + "_" + chunkNo, senderId);
+            this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
         }
 
-        if(desiredRepDegree == null){
+        if(desiredRepDegree == null)
             desiredRepDegree = currentRepDegree;
-        }
-        this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
-        saveProperties();
 
+        this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
+        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
     }
 
     public void state() {
+        System.out.println("\nInformation about each file whose backup it has initiated: ");
+        if(this.backupInfo.size() == 0) System.out.println("\tNone\n");
+
         for(Map.Entry<String, Backup> entry : this.backupInfo.entrySet()) {
             String fileId = entry.getKey();
             Backup backup = entry.getValue();
 
-            System.out.println("File pathname: " + this.FILE_STORAGE_PATH + "/" + fileId);
-            System.out.println("Backup service id of the file: " + backup.getPeer().getId());
-            System.out.println("Desired replication degree: " + backup.getDesiredRepDeg());
+            System.out.println("\tFile pathname: " + backup.getPathname());
+            System.out.println("\tBackup service id of the file: " + backup.getPeer().getId());
+            System.out.println("\tDesired replication degree: " + backup.getDesiredRepDeg());
 
             System.out.println("\nInformation about each file chunk:");
             for(Map.Entry<String, String> chunk : this.repDegreeInfo.entrySet()) {
                 String chunkId = chunk.getKey();
                 String repDegInfo = chunk.getValue();
 
-                System.out.println("ID: \t\t\t\t" + backup.getFileId() + chunkId.split("_")[1]);
-                System.out.println("Perceived replication degree: \t" + repDegInfo.split("_")[0]);
-                System.out.println("Desired replication degree: \t" + repDegInfo.split("_")[1]);
+                if(!chunkId.split("_")[0].equals(fileId)) continue;
+
+                System.out.println("\tID: \t\t\t\t\t\t\t\t" + chunkId);
+                System.out.println("\tPerceived replication degree: \t\t" + repDegInfo.split("_")[0]);
+                System.out.println("\tDesired replication degree: \t\t" + repDegInfo.split("_")[1]);
             }
         }
 
         System.out.println("\nInformation about each stored chunk: ");
+        boolean hasPrinted = false;
         for(Map.Entry<String, String> entry : this.storedChunkHistory.entrySet()) {
-            String fileId = entry.getKey().split("_")[1] + entry.getKey().split("_")[2];
-            System.out.println("Chunk id: " + entry.getKey().split("_")[1]);
-            //System.out.println("Chunk size: " + ); -> criar uma nova mensagem igual a storedmas com o tamanho??
-            System.out.println("Perceived replication degree: " + entry.getValue().split("_")[0]);
+            if(!entry.getKey().split("_")[0].equals(Integer.toString(this.id))) continue;
+            if(!hasPrinted) hasPrinted = true;
+            String chunkId = entry.getKey().split("_")[1] + "_"+  entry.getKey().split("_")[2];
+            System.out.println("\tChunk id: \t\t\t\t\t\t" + chunkId);
+            System.out.println("\tChunk size: \t\t\t\t\t" + this.getChunkSize(chunkId));
+            System.out.println("\tPerceived replication degree: \t" + entry.getValue().split("_")[0] + "\n");
         }
-        if(this.storedChunkHistory.size() == 0) {
-            System.out.println("None");
-        }
+        if(!hasPrinted) System.out.println("\tNone\n");
 
-        System.out.println("\nInformation about peer storage capacity");
-        System.out.println("Maximum amount of disk space that can be used to store chunks: " + this.getUsedMemory() / 1000 + " KBytes");
-        System.out.println("Amount of storage used to backup the chunks: " + this.getUsedMemory() / 1000 + " KBytes");
+        System.out.println("\nInformation about peer storage capacity:");
+        System.out.println("\tMaximum amount of disk space that can be used to store chunks: " + this.getMaxMemory() / 1000 + " KBytes");
+        System.out.println("\tAmount of storage used to backup the chunks: " + this.getUsedMemory() / 1000 + " KBytes");
+    }
+
+    public long getChunkSize(String chunkId) {
+        File file = new File(FILE_STORAGE_PATH + "/" + chunkId.split("_")[0] + "/" + chunkId.split("_")[1]);
+        return file.length();
     }
 
     /* Function for enhancement regarding DELETE protocol */

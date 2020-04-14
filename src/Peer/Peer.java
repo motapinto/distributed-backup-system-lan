@@ -362,7 +362,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         if(!hasPrinted) System.out.println("\tNone\n");
 
         System.out.println("\nInformation about peer storage capacity:");
-        System.out.println("\tMaximum amount of disk space that can be used to store chunks: " + this.getMaxMemory() / 1000 + " KBytes");
+        System.out.println("\tMaximum amount of disk space that can be used to store chunks: " + this.getMaxMemory() + " KBytes");
         System.out.println("\tAmount of storage used to backup the chunks: " + this.getUsedMemory() / 1000 + " KBytes");
     }
 

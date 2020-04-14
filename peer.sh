@@ -1,8 +1,5 @@
-#!/bin/bash
-
 function usage {
-
-	echo "Usage: <Number of Peers> <Version>"
+	echo "Usage: <Number of Peers> <Version>" 
 	exit
 }
 
@@ -15,14 +12,14 @@ function compile {
 
 function runSnooper {
 
-	xterm -e "java -jar McastSnooper.jar $1:$2 $3:$4 $5:$6
-" &
+	xterm -e "java -jar McastSnooper.jar $1:$2 $3:$4 $5:$6" 
+	
 }
 
 function startRMI {
 	
 	killall rmiregistry
-	xterm -e "rmiregistry -J-Djava.rmi.server.codese=file://$(pwd)/" &
+	xterm -e "rmiregistry -J-Djava.rmi.server.codese=file://$(pwd)/" 
 }
 
 function launchPeers {
@@ -38,6 +35,7 @@ function launchPeers {
 if (( $# != 8 )); then
     usage
 fi
+
 
 MCip=$3
 MCport=$4

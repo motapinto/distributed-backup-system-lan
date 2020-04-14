@@ -1,5 +1,6 @@
 package SubProtocols;
 
+import Common.Logs;
 import Common.Utilities;
 import Peer.Peer;
 import Message.*;
@@ -14,30 +15,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Restore {
 
-
     private Peer peer;
     private String pathName;
+    private String fileId;
 
     //Number of chunks necessary to restore the file
     private int numberOfChunks = 0;
     //Number of distinct chunks received
     private int numberDistinctChunksReceived = 0;
 
-    private String fileId;
-
     //Server socket and other objects used by the peer to receive the CHUNK messages from other peers with chunks he desires
     private ServerSocket listener;
     private Boolean tcpConnectionActive = false;
 
-
     //Map to store the chunkId = fileId + "_" + chunkNo and they key the bytes of that chunk
-    private ConcurrentHashMap<String, byte[]> chunks = new ConcurrentHashMap<>();
+    private Map<String, byte[]> chunks = new ConcurrentHashMap<>();
     
     //Socket  used by other peers to send the CHUNK messsage in response to a GETCHUNK message
     private Socket enhancedSocket;
     private OutputStream outStream;
     private DataOutputStream dataOutStream;
-
 
     //primitive used to represent when the restore procedure is completed
     private boolean restoreDone = false;
@@ -65,13 +62,11 @@ public class Restore {
     /**
      * Starts the restore procedure, sending the GETCHUNK message to the channel
      */
-    public void startRestoreFileProcedure(){
-
+    public void startRestoreFileProcedure() {
         this.restoreDone = false;
         File file = new File(this.pathName);
         long newLastModified = file.lastModified();
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
-
 
         Map<String, String> repDegreeInfo = peer.getRepDegreeInfo();
         Map<String, String> storedHistory = peer.getStoredChunkHistory();
@@ -84,7 +79,7 @@ public class Restore {
             }
         });
 
-        // seeing if the peer we are executing already has chunks from that file and if so save them in the chunks map
+        // If the peer we are executing already has chunks from that file saves them into the chunks map
         storedHistory.forEach((key, value) -> {
             if(key.split("_")[1].equals(fileId) && key.split("_")[0].equals(Integer.toString(this.peer.getId()))){
                 String chunkNo = key.split("_")[2];
@@ -125,6 +120,7 @@ public class Restore {
             reconstructFile();
             file.setLastModified(newLastModified);
         }
+
         this.restoreDone = true;
 
         if(this.peer.getVersion().equals("1.1")) {
@@ -198,20 +194,20 @@ public class Restore {
                         }
 
                         try {
-                            while (enhancedSocket.getInputStream().available() != 0) {
-                            }
+                            while (this.enhancedSocket.getInputStream().available() != 0) { }
                             try { System.out.println("SENDING CHUNK" + chunkMessage.getHeader().getChuckNo());
                                 this.dataOutStream.writeInt(chunkMessage.toBytes().length);
                                 this.dataOutStream.write(chunkMessage.toBytes());
                                 System.out.println("SENT CHUNK" + chunkMessage.getHeader().getChuckNo());
                             }
                             catch (Exception e){
-                                System.out.println(e.getMessage());
+                                Logs.logError("Error while writing chuck message");
+                                System.err.println(e.getMessage());
                             }
 
 
                         } catch (IOException e) {
-                            System.out.println(e.getMessage());
+                            System.err.println(e.getMessage());
                         }
                     }
 
@@ -219,8 +215,8 @@ public class Restore {
                         Dispatcher dispatcher = new Dispatcher(this.peer, chunkMessage, this.peer.getRestoreChannel());
                         this.peer.getReceiverExecutor().submit(dispatcher);
                     }
-
                 }
+
                 this.peer.removeChunkFromSentChunks(message.getHeader().getFileId(), message.getHeader().getChuckNo());
 
             } catch (InterruptedException e) {
@@ -241,7 +237,7 @@ public class Restore {
     }
 
     /**
-     * Gets the bytes of a certian file
+     * Gets the bytes of a certain file
      * @param pathName of the file
      * @return the file in a byte array
      */
@@ -275,7 +271,7 @@ public class Restore {
     }
 
     /**
-     * connects to the TCP socket to be able to send the CHUNK message to the peer that is currently restoring the file
+     * Connects to the TCP socket to be able to send the CHUNK message to the peer that is currently restoring the file
      */
     public void setServerSocketConnection(InetAddress ip, int port) {
 
@@ -337,34 +333,27 @@ public class Restore {
         public void run() {
 
             while(!this.restore.isRestoreDone()) {
-
                 try {
                     InputStream in = this.socket.getInputStream();
                     DataInputStream dis = new DataInputStream(in);
                     try {
-
                         int len = dis.readInt();
                         byte[] data = new byte[len];
-                        if (len > 0) {
+                        if (len > 0)
                             dis.readFully(data);
-                        }
-
 
                         Message requestMessage = new Message(data);
                         this.restore.saveChunkProcedure(requestMessage);
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
-
-
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
 
             try {
-                System.out.println("CLOSED SOCKET");
+                Logs.log("Socket closed");
                 this.socket.close();
             } catch (IOException e) {
                 e.printStackTrace();

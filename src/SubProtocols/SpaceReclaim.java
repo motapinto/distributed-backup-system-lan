@@ -103,6 +103,8 @@ public class SpaceReclaim {
             file.getParentFile().delete();
         }
 
+        if(file.getParentFile().exists()) file.getParentFile().delete();
+
         this.sendRemovedMessage(chunkNo, fileId);
 
         for(Map.Entry<String, String> entry : this.peer.getStoredChunkHistory().entrySet()) {

@@ -103,8 +103,7 @@ public class SpaceReclaim {
             file.getParentFile().delete();
         }
 
-        if(file.getParentFile().exists())
-            file.getParentFile().delete();
+        if(file.getParentFile().exists()) file.getParentFile().delete();
 
         this.sendRemovedMessage(chunkNo, fileId);
 

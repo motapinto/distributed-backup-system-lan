@@ -78,7 +78,7 @@ public class Delete {
             this.peer.getDeleteHistory().forEach((key, value) -> {
                 if(value.equals(id)) {
                     String fileId = key.split("_")[0];
-                    Message request = new Message(DELETE, "1.1", Integer.toString(this.peer.getId()), fileId);
+                    Message request = new Message(DELETE, Integer.toString(this.peer.getId()), Integer.toString(this.peer.getId()), fileId);
 
                     for(int i = 0; i < MESSAGE_RETRIES; i++) {
                         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());

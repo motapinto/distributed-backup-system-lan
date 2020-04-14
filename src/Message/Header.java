@@ -8,7 +8,6 @@ public class Header {
     private String port;
     private final String version;
     private final String messageType;
-    private String chunkNo;
     private String senderId;
     private String fileId;
     private String replicationDeg;

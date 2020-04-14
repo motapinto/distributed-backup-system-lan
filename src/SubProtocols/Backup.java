@@ -103,7 +103,11 @@ public class Backup {
         String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
 
         if(repDegString == null) {
-            this.peer.updateRepDegreeInfo(request, true);
+
+            if(!this.peer.getRepDegreeInfo().containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo())){
+                this.peer.getRepDegreeInfo().put(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo(), "1");
+            }
+
             repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
         }
 
@@ -138,8 +142,9 @@ public class Backup {
             return;
 
         if(!this.peer.getVersion().equals("1.0")) {
+
             try {
-                Thread.sleep((long) Math.random() *  MAX_DELAY);
+                Thread.sleep(MAX_DELAY);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -151,8 +156,18 @@ public class Backup {
                     return;
             }
         }
+        else {
+            try {
+                Thread.sleep((long) Math.random() * MAX_DELAY);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-        this.peer.updateRepDegreeInfo(message, true);
+
+        if(!this.peer.getRepDegreeInfo().containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo())){
+            this.peer.getRepDegreeInfo().put(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo(), "1");
+        }
         this.sendStoredMessage(message);
 
         String pathName = this.peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId()

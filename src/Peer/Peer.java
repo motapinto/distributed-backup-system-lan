@@ -125,8 +125,8 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      * A .properties file is a simple collection of KEY-VALUE pairs that can be parsed by the java.util.Properties class.
      */
     private void readProperties() {
-        readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
         readMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
+        this.constructRepDegreeInfo();
         readMap(INITIATOR_BACKUP_INFO_PATH, this.initiatorBackupInfo);
         readMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
 
@@ -135,6 +135,23 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.memoryInfo.put("max", Integer.toString(INITIAL_MAX_MEMORY));
             this.saveMap(DISK_INFO_PATH, this.memoryInfo);
         }
+    }
+
+    public void constructRepDegreeInfo(){
+        this.storedChunkHistory.forEach((key, value) -> {
+            String fileId = key.split("_")[1];
+            String chunkNo = key.split("_")[2];
+            String chunkId = fileId + chunkNo;
+
+            if(this.repDegreeInfo.containsKey(chunkId)){
+
+            }
+            else{
+
+            }
+        });
+
+
     }
 
     /**
@@ -294,20 +311,25 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         }
 
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null) {
-            if (this.repDegreeInfo.get(chunkId) != null) {
+
+            this.storedChunkHistory.put(storedMessageHistoryId, senderId);
+
+
+
+
+            /* if (this.repDegreeInfo.get(chunkId) != null) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-                /*if(message.getHeader().getMessageType().equals(PUTCHUNK)){
+                if(message.getHeader().getMessageType().equals(PUTCHUNK)){
                     this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + message.getHeader().getReplicationDeg());
                 }
                 else{
-                    */
                     this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
-                //}
+        }
                 this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
                 this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
             } else {
                 this.initiateRepDegreeInfo(message);
-            }
+            }*/
         }
     }
 
@@ -327,8 +349,8 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
         }
 
-        /*if(desiredRepDegree == null)
-            desiredRepDegree = currentRepDegree;*/
+        if(desiredRepDegree == null)
+            desiredRepDegree = currentRepDegree;
 
         this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
         this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);

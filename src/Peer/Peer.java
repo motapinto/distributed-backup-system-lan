@@ -294,12 +294,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             if(!this.storedChunkHistory.containsKey(storedMessageHistoryId)) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
                 if(this.repDegreeInfo.containsKey(chunkId)) {
-//                    if(this.storedChunkHistory.containsKey(this.id + "_" + chunkId))
-                    this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
-//                    else
-//                        this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + (Integer.parseInt(value.split("_")[1]) + 1));
+                    if(this.storedChunkHistory.containsKey(this.id + "_" + chunkId))
+                        this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
+                    else
+                        this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + (Integer.parseInt(value.split("_")[1]) + 1));
                 } else {
-                    this.repDegreeInfo.put(this.id + "_" + chunkId, "1_1");
+                    this.repDegreeInfo.put(chunkId, "1_1");
                 }
                 this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
                 this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
@@ -308,7 +308,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     public void state() {
-        System.out.println("\nInformation about each file whose backup it has initiated: ");
+        System.out.println("\nInformation about each file whose backup it has initiated: \n");
         if(this.backupInfo.size() == 0) System.out.println("\tNone\n");
 
         for(Map.Entry<String, Backup> entry : this.backupInfo.entrySet()) {
@@ -319,16 +319,16 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             System.out.println("\tBackup service id of the file: " + backup.getPeer().getId());
             System.out.println("\tDesired replication degree: " + backup.getDesiredRepDeg());
 
-            System.out.println("\nInformation about each file chunk:");
+            System.out.println("\n\tInformation about each file chunk:");
             for(Map.Entry<String, String> chunk : this.repDegreeInfo.entrySet()) {
                 String chunkId = chunk.getKey();
                 String repDegInfo = chunk.getValue();
 
                 if(!chunkId.split("_")[0].equals(fileId)) continue;
 
-                System.out.println("\tID: \t\t\t\t\t\t\t\t" + chunkId);
-                System.out.println("\tPerceived replication degree: \t\t" + repDegInfo.split("_")[0]);
-                System.out.println("\tDesired replication degree: \t\t" + repDegInfo.split("_")[1]);
+                System.out.println("\t\tID: \t\t\t\t\t\t\t\t" + chunkId);
+                System.out.println("\t\tPerceived replication degree: \t\t" + repDegInfo.split("_")[0]);
+                System.out.println("\t\tDesired replication degree: \t\t" + repDegInfo.split("_")[1]);
             }
         }
 
@@ -344,7 +344,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         }
         if(!hasPrinted) System.out.println("\tNone\n");
 
-        System.out.println("\nInformation about peer storage capacity:");
+        System.out.println("Information about peer storage capacity:");
         System.out.println("\tMaximum amount of disk space that can be used to store chunks: " + this.getMaxMemory() + " KBytes");
         System.out.println("\tAmount of storage used to backup the chunks: " + this.getUsedMemory() / 1000 + " KBytes");
     }
@@ -446,7 +446,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
     public void setMaxMemory(int maxMemory) {
         this.memoryInfo.put("max", Integer.toString(maxMemory));
-        saveMap(DISK_INFO_PATH, this.memoryInfo);
+        this.saveMap(DISK_INFO_PATH, this.memoryInfo);
     }
 
     public int getUsedMemory() {
@@ -455,7 +455,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
     public void setUsedMemory(int memoryUsedByChunk){
         this.memoryInfo.compute("used", (key, value) -> Integer.toString(Integer.parseInt(value) + memoryUsedByChunk));
-        saveMap(DISK_INFO_PATH, this.memoryInfo);
+        this.saveMap(DISK_INFO_PATH, this.memoryInfo);
     }
 
     public int getAvailableStorage() {

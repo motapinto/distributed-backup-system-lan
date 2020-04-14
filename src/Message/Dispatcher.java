@@ -101,7 +101,6 @@ public class Dispatcher implements Runnable{
                 this.peer.getSpaceReclaim().updateChunkRepDegree(this.message);
                 break;
             case CHUNK:
-                System.out.println("The chunk as length: "  + message.getBody().length);
                 this.peer.getRestore().saveChunkProcedure(message);
                 break;
         }

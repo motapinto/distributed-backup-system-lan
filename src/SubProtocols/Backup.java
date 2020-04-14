@@ -140,7 +140,6 @@ public class Backup {
             return;
 
         if(!this.peer.getVersion().equals("1.0")) {
-
             try {
                 Thread.sleep(MAX_DELAY);
             } catch (InterruptedException e) {

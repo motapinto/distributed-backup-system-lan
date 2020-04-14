@@ -158,7 +158,6 @@ public class Restore {
         Message message;
         for(int i = 0; i <  this.numberOfChunks; i++){
            if(this.chunks.get(this.fileId + "_" + i) == null){
-               System.out.println("NEED CHUNKNO " + i);
                message = new Message("GETCHUNK", this.peer.getVersion(), Integer.toString(this.peer.getId()), this.fileId, Integer.toString(i));
                dispatcher = new Dispatcher(this.peer, message, this.peer.getControlChannel());
                this.peer.getSenderExecutor().submit(dispatcher);

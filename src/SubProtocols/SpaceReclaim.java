@@ -71,13 +71,16 @@ public class SpaceReclaim {
             String chunkId = rawKey.split("_")[1] + "_" + rawKey.split("_")[2];
 
             int peerStorer = Integer.parseInt(rawKey.split("_")[0]);
+            if(peerStorer != this.peer.getId()) continue;
+
+            System.out.println("chunk Id: " + chunkId);
 
             String currRepDeg = repDegreeInfo.get(chunkId).split("_")[0];
             String desRepDeg = repDegreeInfo.get(chunkId).split("_")[1];
 
-            if(firstTask && peerStorer == this.peer.getId() && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
+            if(firstTask && (Integer.parseInt(currRepDeg) > Integer.parseInt(desRepDeg)))
                 this.deleteChunk(chunkId);
-            else if(!firstTask && peerStorer == this.peer.getId())
+            else if(!firstTask)
                 this.deleteChunk(chunkId);
         }
     }

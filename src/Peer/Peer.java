@@ -126,7 +126,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      */
     private void readProperties() {
         readMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
-        this.constructRepDegreeInfo();
+        readMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
         readMap(INITIATOR_BACKUP_INFO_PATH, this.initiatorBackupInfo);
         readMap(DELETE_ENHANCEMENT_INFO_PATH, this.deleteHistory);
 
@@ -135,23 +135,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.memoryInfo.put("max", Integer.toString(INITIAL_MAX_MEMORY));
             this.saveMap(DISK_INFO_PATH, this.memoryInfo);
         }
-    }
-
-    public void constructRepDegreeInfo(){
-        this.storedChunkHistory.forEach((key, value) -> {
-            String fileId = key.split("_")[1];
-            String chunkNo = key.split("_")[2];
-            String chunkId = fileId + chunkNo;
-
-            if(this.repDegreeInfo.containsKey(chunkId)){
-
-            }
-            else{
-
-            }
-        });
-
-
     }
 
     /**
@@ -301,59 +284,27 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         String storedMessageHistoryId = senderId + "_" + chunkId;
 
         if(!increment){
-            String repDegInf = this.repDegreeInfo.get(chunkId);
-            Integer newValue = Integer.parseInt(repDegInf.split("_")[0]) - 1;
-            this.repDegreeInfo.put(chunkId, newValue + "_" + repDegInf.split("_")[1]);
-            this.storedChunkHistory.remove(storedMessageHistoryId);
-            this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
-            this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
-            return;
-        }
-
-        if(this.storedChunkHistory.get(storedMessageHistoryId) == null) {
-
-            this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-
-
-
-
-            /* if (this.repDegreeInfo.get(chunkId) != null) {
+            if(this.repDegreeInfo.containsKey(chunkId)) {
+                this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> ((Integer.parseInt(value.split("_")[0]) - 1) + "_" + value.split("_")[1]));
+                this.storedChunkHistory.remove(storedMessageHistoryId);
+                this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
+                this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
+            }
+        } else {
+            if(!this.storedChunkHistory.containsKey(storedMessageHistoryId)) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-                if(message.getHeader().getMessageType().equals(PUTCHUNK)){
-                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + message.getHeader().getReplicationDeg());
+                if(this.repDegreeInfo.containsKey(chunkId)) {
+//                    if(this.storedChunkHistory.containsKey(this.id + "_" + chunkId))
+                    this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
+//                    else
+//                        this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + (Integer.parseInt(value.split("_")[1]) + 1));
+                } else {
+                    this.repDegreeInfo.put(this.id + "_" + chunkId, "1_1");
                 }
-                else{
-                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
-        }
                 this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
                 this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
-            } else {
-                this.initiateRepDegreeInfo(message);
-            }*/
+            }
         }
-    }
-
-    public void initiateRepDegreeInfo(Message message){
-        String fileId = message.getHeader().getFileId();
-        String senderId = message.getHeader().getSenderId();
-        String chunkNo = message.getHeader().getChuckNo();
-        String desiredRepDegree = message.getHeader().getReplicationDeg();
-        String currentRepDegree;
-
-        if(this.id == Integer.parseInt(senderId))
-            currentRepDegree = "0";
-
-        else {
-            currentRepDegree = "1";
-            this.storedChunkHistory.put(this.id + "_" + fileId + "_" + chunkNo, senderId);
-            this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
-        }
-
-        if(desiredRepDegree == null)
-            desiredRepDegree = currentRepDegree;
-
-        this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
-        this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
     }
 
     public void state() {

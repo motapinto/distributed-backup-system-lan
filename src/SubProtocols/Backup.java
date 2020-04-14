@@ -103,10 +103,8 @@ public class Backup {
         String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
 
         if(repDegString == null) {
-
-            if(!this.peer.getRepDegreeInfo().containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo())){
-                this.peer.getRepDegreeInfo().put(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo(), "1");
-            }
+            if(!this.peer.getRepDegreeInfo().containsKey(fileId + "_" + chunkNo))
+                this.peer.getRepDegreeInfo().put(fileId + "_" + chunkNo, "0_" + this.desiredRepDeg);
 
             repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
         }
@@ -155,8 +153,7 @@ public class Backup {
                 if (Integer.parseInt(currRepDeg) >= Integer.parseInt(desRepDeg))
                     return;
             }
-        }
-        else {
+        } else {
             try {
                 Thread.sleep((long) Math.random() * MAX_DELAY);
             } catch (InterruptedException e) {
@@ -164,10 +161,19 @@ public class Backup {
             }
         }
 
+        String chunkId = message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo();
 
-        if(!this.peer.getRepDegreeInfo().containsKey(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo())){
-            this.peer.getRepDegreeInfo().put(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo(), "1");
+        if(!this.peer.getRepDegreeInfo().containsKey(chunkId)){
+            this.peer.getRepDegreeInfo().put(chunkId, "1_" + message.getHeader().getReplicationDeg());
+        } else {
+            String currentRepDeg = this.peer.getRepDegreeInfo().get(chunkId).split("_")[0];
+            this.peer.getRepDegreeInfo().put(chunkId, currentRepDeg + "_" + message.getHeader().getReplicationDeg());
         }
+
+        this.peer.saveMap(this.peer.REPLICATION_DEGREE_INFO_PATH, this.peer.getRepDegreeInfo());
+        this.peer.getStoredChunkHistory().put(this.peer.getId() + "_" + chunkId, message.getHeader().getSenderId());
+        this.peer.saveMap(this.peer.STORED_CHUNK_HISTORY_PATH, this.peer.getStoredChunkHistory());
+
         this.sendStoredMessage(message);
 
         String pathName = this.peer.FILE_STORAGE_PATH + "/" + message.getHeader().getFileId()

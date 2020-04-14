@@ -11,19 +11,18 @@ import Peer.Peer;
 import static Common.Constants.MAX_PACKET_SIZE;
 
 public class Channel implements Runnable {
-    protected Peer peer;
-    protected int port;
-    protected String address;
 
+    protected final Peer peer;
+    protected final int port;
+    protected final String address;
     protected MulticastSocket multicastSocket;
 
     /**
-     * Class responsible for the comunication with the multicast
+     * Class responsible with the communication with the multicast
      *
      * @param peer : peer listening to the multicast
      * @param address : multicast address
      * @param port : multicast port
-     * @throws IOException
      */
     Channel(Peer peer, String address, int port) {
         this.peer = peer;
@@ -35,6 +34,7 @@ public class Channel implements Runnable {
             InetAddress ipAddress = InetAddress.getByName(address);
             this.multicastSocket.joinGroup(ipAddress);
         } catch (IOException e) {
+            Logs.logError("Error while creating a multicast socket");
             e.printStackTrace();
         }
     }
@@ -68,20 +68,11 @@ public class Channel implements Runnable {
         }
     }
 
-    /**
-     * Returns the peer connected to the channel
-     */
     public Peer getPeer() {
         return this.peer;
     }
 
-    /**
-     * Returns the channel port
-     */
     public int getPort() { return port; }
 
-    /**
-     * Returns the channel address
-     */
     public String getAddress() { return address; }
 }

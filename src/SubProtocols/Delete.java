@@ -3,12 +3,11 @@ package SubProtocols;
 import java.io.File;
 import java.util.Map;
 
-import Common.Utilities;
 import Message.Message;
 import Peer.Peer;
 import Message.Dispatcher;
-
 import static Common.Constants.*;
+import Common.Utilities;
 
 public class Delete {
 
@@ -69,7 +68,9 @@ public class Delete {
     }
 
     /**
-     *
+     * Checks if a peer that did not listen to a DELETE message of a file id
+     * needs to delete some chunks regarding that file Id (Enchancement)
+     * @param id
      */
     // info = fileId + "_" + peer id that needs to delete
     public void checkIfPeerNeedsToDelete(String id) {

@@ -17,7 +17,7 @@ public class Dispatcher implements Runnable{
     private String address;
     private int port;
 
-    enum MessageType{
+    enum MessageType {
         SENDER,
         RECEIVER
     }
@@ -66,13 +66,11 @@ public class Dispatcher implements Runnable{
     }
 
     /**
-     * Function responsible to receiving requests and does the handling
+     * Function responsible to receiving and handling requests
      */
     public void receiveMessageFromChannel() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
         this.peer.getDelete().checkIfPeerNeedsToDelete(this.message.getHeader().getSenderId());
-
-        System.out.println("Received: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
 
         switch (this.message.getHeader().getMessageType()) {
             case PUTCHUNK:
@@ -109,14 +107,11 @@ public class Dispatcher implements Runnable{
     }
 
     /**
-     * Delivers a message to a channel
+     * Function responsible for delivering a message to a channel
      */
     public void sendMessageToChannel() {
         DatagramPacket packet;
         DatagramSocket socket;
-
-        System.out.println("Sent: " + this.message.getHeader().getMessageType() + " sent by: " + message.getHeader().getSenderId());
-        System.out.println(message.getHeader());
 
         try {
             socket = new DatagramSocket();

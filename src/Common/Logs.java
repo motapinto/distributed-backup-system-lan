@@ -8,12 +8,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Logs {
+
     private static PrintStream logFile = System.err;
     private static DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 
     private static String getStandardHeader() {
         Date date = new Date();
-        return "" + Thread.currentThread().getId() + ", " + dateFormat.format(date) + ": ";
+        return "Thread id:" + Thread.currentThread().getId() + " @ " + dateFormat.format(date) + ": ";
     }
 
     synchronized public static void logError(String msg) {
@@ -32,9 +33,5 @@ public class Logs {
 
         logFile.println("LOG  @ " + getStandardHeader() + msg);
         logFile.flush();
-    }
-
-    synchronized public static void setLogFile(String filepath) throws FileNotFoundException {
-        Logs.logFile = new PrintStream(new FileOutputStream(filepath, true));
     }
 }

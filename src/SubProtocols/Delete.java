@@ -83,7 +83,7 @@ public class Delete {
                         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
                         this.peer.getSenderExecutor().submit(dispatcher);
                         try {
-                            Thread.sleep(MAX_DELAY);
+                            Thread.sleep((long) (MAX_DELAY * Math.random()));
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -103,7 +103,7 @@ public class Delete {
             Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getControlChannel());
             this.peer.getSenderExecutor().submit(dispatcher);
             try {
-                Thread.sleep(MAX_DELAY);
+                Thread.sleep((long) (MAX_DELAY * Math.random()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

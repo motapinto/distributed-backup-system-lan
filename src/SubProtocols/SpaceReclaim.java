@@ -162,7 +162,7 @@ public class SpaceReclaim {
         String chunkNo = chunkId.split("_")[1];
 
         try {
-            Thread.sleep((long) (Math.random() * MAX_DELAY));
+            Thread.sleep((long) (MAX_DELAY * Math.random()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

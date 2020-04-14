@@ -317,9 +317,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             this.saveMap(STORED_CHUNK_HISTORY_PATH, this.storedChunkHistory);
         }
 
-        if(desiredRepDegree == null){
+        if(desiredRepDegree == null)
             desiredRepDegree = currentRepDegree;
-        }
+
         this.repDegreeInfo.put(fileId + "_" + chunkNo, currentRepDegree + "_" + desiredRepDegree);
         this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);
     }

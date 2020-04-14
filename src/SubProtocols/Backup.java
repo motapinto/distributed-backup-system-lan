@@ -188,7 +188,7 @@ public class Backup {
      */
     public void sendStoredMessage(Message message) {
         try {
-            Thread.sleep((long)Math.random() * MAX_DELAY);
+            Thread.sleep((long) (MAX_DELAY * Math.random()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

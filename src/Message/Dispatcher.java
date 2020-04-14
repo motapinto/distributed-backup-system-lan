@@ -17,7 +17,7 @@ public class Dispatcher implements Runnable{
     private String address;
     private int port;
 
-    enum MessageType{
+    enum MessageType {
         SENDER,
         RECEIVER
     }
@@ -66,7 +66,7 @@ public class Dispatcher implements Runnable{
     }
 
     /**
-     * Function responsible to receiving requests and does the handling
+     * Function responsible to receiving and handling requests
      */
     public void receiveMessageFromChannel() {
         if(Integer.parseInt(this.message.getHeader().getSenderId()) == this.peer.getId()) return;
@@ -106,7 +106,7 @@ public class Dispatcher implements Runnable{
     }
 
     /**
-     * Delivers a message to a channel
+     * Function responsible for delivering a message to a channel
      */
     public void sendMessageToChannel() {
         DatagramPacket packet;

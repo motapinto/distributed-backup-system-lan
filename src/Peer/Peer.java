@@ -287,7 +287,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         if(getCurrent) index = 0;
         else index = 1;
 
-        if(this.repDegreeInfo.get(chunkId) != null) {
+        if(this.repDegreeInfo.containsKey(chunkId)) {
             return this.repDegreeInfo.get(chunkId).split("_")[index];
         }
         else {
@@ -372,18 +372,21 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
                 String chunkId = chunk.getKey();
                 String repDegInfo = chunk.getValue();
 
-                System.out.println("Id: " + backup.getFileId() + chunkId.split("_")[1]);
-                System.out.println("Perceived replication degree: " + repDegInfo.split("_")[0]);
-                System.out.println("Desired replication degree: " + repDegInfo.split("_")[1]);
+                System.out.println("ID: \t\t\t\t" + backup.getFileId() + chunkId.split("_")[1]);
+                System.out.println("Perceived replication degree: \t" + repDegInfo.split("_")[0]);
+                System.out.println("Desired replication degree: \t" + repDegInfo.split("_")[1]);
             }
         }
 
-        System.out.println("\nInformation about each stored chunk:");
+        System.out.println("\nInformation about each stored chunk: ");
         for(Map.Entry<String, String> entry : this.storedChunkHistory.entrySet()) {
             String fileId = entry.getKey().split("_")[1] + entry.getKey().split("_")[2];
             System.out.println("Chunk id: " + entry.getKey().split("_")[1]);
-            //System.out.println("Chunk size: " + ); -> criar uma nova mensgaem igual a storedmas com o tamanho??
+            //System.out.println("Chunk size: " + ); -> criar uma nova mensagem igual a storedmas com o tamanho??
             System.out.println("Perceived replication degree: " + entry.getValue().split("_")[0]);
+        }
+        if(this.storedChunkHistory.size() == 0) {
+            System.out.println("None");
         }
 
         System.out.println("\nInformation about peer storage capacity");

@@ -9,6 +9,7 @@ import static Common.Constants.*;
 import java.io.*;
 
 public class Backup {
+
     private Peer peer;
     private int desiredRepDeg;
     private String pathName;
@@ -23,7 +24,6 @@ public class Backup {
     public Backup(Peer peer){
         this.peer = peer;
         this.senderId = this.peer.getId();
-        this.pathName = null;
     }
 
     /**
@@ -56,7 +56,7 @@ public class Backup {
         int numNecessaryChunks = (int)Math.ceil((double)file.length() / MAX_CHUNK_SIZE);
 
         if(numNecessaryChunks > MAX_NUM_CHUNKS) {
-            Logs.logError("File can only have ...");
+            Logs.logError("File can only have a maximum of" + MAX_NUM_CHUNKS + " chunks");
             return;
         }
 
@@ -90,6 +90,7 @@ public class Backup {
 
     /**
      * Sends PUTCHUNK message for a chunk
+     *
      * @param chunk   : received files to separate into chunks
      * @param chunkNo : number of the received chunk
      * @param fileId  : file id of the file
@@ -100,10 +101,12 @@ public class Backup {
 
         int sleepTime = 1000;
         String repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
+
         if(repDegString == null) {
             this.peer.updateRepDegreeInfo(request, true);
             repDegString = this.peer.getRepDegreeInfo(request.getHeader().getFileId(), Integer.toString(chunkNo), true);
         }
+
         int repDeg =  Integer.parseInt(repDegString);
 
         Dispatcher dispatcher = new Dispatcher(this.peer, request, this.peer.getBackupChannel());
@@ -125,13 +128,29 @@ public class Backup {
     /**
      * Stores the chunk and sends a STORED message, if the peer has enough memory and does not have that chunk
      *
-     * @param message : PUTCHUNK message
+     * @param message : PUTCHUNK received message
      */
     public void startStoredProcedure(Message message) {
-        if(this.peer.getAvailableStorage() < message.getBody().length) return;
+        if(this.peer.getAvailableStorage() < message.getBody().length)
+            return;
 
         if(this.peer.getInitiatorBackupInfo().get(message.getHeader().getFileId()) != null)
             return;
+
+        if(!this.peer.getVersion().equals("1.0")) {
+            try {
+                Thread.sleep((long) (Math.random() * MAX_DELAY));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            String currRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), true);
+            if(currRepDeg == null) return;
+            String desRepDeg = this.peer.getRepDegreeInfo(message.getHeader().getFileId(), message.getHeader().getChuckNo(), false);
+
+            if(Integer.parseInt(currRepDeg) >= Integer.parseInt(desRepDeg))
+              return;
+        }
 
         this.peer.updateRepDegreeInfo(message, true);
         this.sendStoredMessage(message);
@@ -163,6 +182,7 @@ public class Backup {
 
     /**
      * Sends STORED message for a chunk
+     *
      * @param message : message with request
      */
     public void sendStoredMessage(Message message) {

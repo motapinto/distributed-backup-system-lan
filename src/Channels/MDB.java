@@ -2,7 +2,6 @@ package Channels;
 
 import Common.Logs;
 import Peer.Peer;
-import java.io.IOException;
 
 public class MDB extends Channel {
 

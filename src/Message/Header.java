@@ -3,9 +3,10 @@ package Message;
 import static Common.Constants.CRLF;
 
 public class Header {
-    private String chunkNo;
+
     private final String version;
     private final String messageType;
+    private String chunkNo;
     private String senderId;
     private String fileId;
     private String replicationDeg;
@@ -22,7 +23,7 @@ public class Header {
      * @param chunkNo        : indicate the chunk number
      * @param replicationDeg : indicates the desired replication degree
      */
-    public Header(String messageType, String version, String senderId, String fileId, String chunkNo, String replicationDeg) {
+    public Header(String version, String messageType, String senderId, String fileId, String chunkNo, String replicationDeg) {
         this.messageType = messageType.trim();
         this.version = version.trim();
         this.senderId = senderId.trim();
@@ -41,9 +42,9 @@ public class Header {
      * @param fileId      : indicates the file id
      * @param chunkNo     : indicate the chunk number
      */
-    public Header(String messageType, String version, String senderId, String fileId, String chunkNo) {
-        this.messageType = messageType.trim();
+    public Header(String version, String messageType, String senderId, String fileId, String chunkNo) {
         this.version = version.trim();
+        this.messageType = messageType.trim();
         this.senderId = senderId.trim();
         this.fileId = fileId.trim();
         this.chunkNo = chunkNo.trim();
@@ -51,37 +52,36 @@ public class Header {
 
     /**
      * Message header for DELETE messages
-     * <Version> <MessageType> <SenderId> <FileId> <ChunkNo> <CRLF>
+     * <Version> <MessageType> <SenderId> <FileId> <CRLF>
      *
      * @param messageType : indicates message type
      * @param version     : indicates the version of the peer that sends the message
      * @param senderId    : indicates the sender id
      * @param fileId      : indicates the file id
      */
-    public Header(String messageType, String version, String senderId, String fileId) {
-        this.messageType = messageType.trim();
+    public Header(String version, String messageType, String senderId, String fileId) {
         this.version = version.trim();
+        this.messageType = messageType.trim();
         this.senderId = senderId.trim();
         this.fileId = fileId.trim();
     }
 
     /**
      * Message header for DELETEACK messages
-     * <Version> <MessageType> <SenderId> <FileId> <ChunkNo> <CRLF>
+     * <Version> <MessageType> <SenderId> <FileId> <DestId> <CRLF>
      *
      * @param messageType : indicates message type
      * @param senderId    : indicates the sender id
      * @param fileId      : indicates the file id
      * @param destId      : indicates the destination peer id
      */
-    public Header(String messageType, String version, String senderId, String fileId, String destId, boolean isACK) {
-        this.messageType = messageType.trim();
+    public Header(String version, String messageType, String senderId, String fileId, String destId, boolean isACK) {
         this.version = version.trim();
+        this.messageType = messageType.trim();
         this.senderId = senderId.trim();
         this.fileId = fileId.trim();
         this.destId = destId;
     }
-
 
     @Override
     public String toString() {

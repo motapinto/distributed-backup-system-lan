@@ -24,7 +24,6 @@ public class Restore {
     private int numberDistinctChunksReceived = 0;
     private String fileId;
     private ServerSocket listener;
-    
     private Boolean tcpConnectionActive = false;
 
     //Map to store the chunkId = fileId + "_" + chunkNo and they key the bytes of that chunk

@@ -308,6 +308,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
      * only if this is the first time that the sender of a message as sent the STORED message
      *
      * @param message PUTCHUNK message that came from the peer that wants this peer to store the chunk
+     * or STORED message received from other p+errs who have stored the chunk
      */
     public void updateRepDegreeInfo(Message message, boolean increment) {
 
@@ -329,7 +330,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         if(this.storedChunkHistory.get(storedMessageHistoryId) == null) {
             if (this.repDegreeInfo.get(chunkId) != null) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
-                this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
+                if(message.getHeader().getMessageType().equals(PUTCHUNK)) {
+                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + message.getHeader().getReplicationDeg());
+                }
+                else{
+                    this.repDegreeInfo.compute(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
+                }
                 this.saveProperties();
             } else {
                 this.initiateRepDegreeInfo(message);

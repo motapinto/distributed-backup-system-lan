@@ -14,7 +14,7 @@ java -jar McastSnooper.jar 224.0.0.0:4445 224.0.0.1:4446 224.0.0.2:4447
 ./compile.sh 
 ```
 
-### Launch a peer with the peer.sh script in the build folder (advised to run at least 3 peers)
+### Launch a peer with the peer.sh script in the build folder (advised to run at least 4 peers)
 ```
 ./peer.sh <Version> <Id> <serviceName> <MCip> <MCport> <MDBip> <MDBport> <MDRip> <MDRport>
 

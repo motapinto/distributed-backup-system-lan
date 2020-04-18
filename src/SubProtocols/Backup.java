@@ -37,14 +37,22 @@ public class Backup {
         this.senderId = this.peer.getId();
         this.desiredRepDeg = desiredRepDeg;
         this.pathName = pathName;
+
+
     }
 
     /**
      * Splits a file into chunks and for each chunk send a PUTCHUNK message
      */
     public void startPutChunkProcedure() {
+
         File file = new File(this.pathName);
         this.fileId = Utilities.hashAndEncode(file.getName() + file.lastModified() + file.length());
+
+
+        // stores the initiator peer to use in conjunction with the reclaim protocol
+        this.peer.getInitiatorBackupInfo().put(this.fileId, "1");
+        this.peer.saveMap(this.peer.INITIATOR_BACKUP_INFO_PATH, this.peer.getInitiatorBackupInfo());
 
         InputStream inputFile = null;
         try {

@@ -210,9 +210,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         this.backup = new Backup(this, pathName, replicationDegree);
         this.backup.startPutChunkProcedure();
 
-        // stores the initiator peer to use in conjunction with the reclaim protocol
-        this.initiatorBackupInfo.put(this.backup.getFileId(), "1");
-        this.saveMap(INITIATOR_BACKUP_INFO_PATH, this.initiatorBackupInfo);
+
 
         // Stores backup protocol to be used in state()
         this.backupInfo.put(this.backup.getFileId(), this.backup);
@@ -294,11 +292,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             if(!this.storedChunkHistory.containsKey(storedMessageHistoryId)) {
                 this.storedChunkHistory.put(storedMessageHistoryId, senderId);
                 if(this.repDegreeInfo.containsKey(chunkId)) {
-                    if(this.storedChunkHistory.containsKey(this.id + "_" + chunkId))
+                    if(this.storedChunkHistory.containsKey(this.id + "_" + chunkId) || this.initiatorBackupInfo.containsKey(fileId))
                         this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + value.split("_")[1]);
-                    else
+                    else if(!this.initiatorBackupInfo.containsKey(fileId)){
                         this.repDegreeInfo.computeIfPresent(chunkId, (key, value) -> (Integer.parseInt(value.split("_")[0]) + 1) + "_" + (Integer.parseInt(value.split("_")[1]) + 1));
-                } else {
+                    }
+                    } else {
                     this.repDegreeInfo.put(chunkId, "1_1");
                 }
                 this.saveMap(REPLICATION_DEGREE_INFO_PATH, this.repDegreeInfo);

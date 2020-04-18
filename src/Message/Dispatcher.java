@@ -92,8 +92,6 @@ public class Dispatcher implements Runnable{
                 if(!this.message.getHeader().getVersion().equals("1.0"))
                     this.peer.getDelete().sendDeleteAckMessage(message.getHeader().getFileId(), message.getHeader().getSenderId());
             case DELETEACK:
-                System.out.println("heyy");
-                System.out.println(this.message.getHeader());
                 if(Integer.parseInt(this.message.getHeader().getDestId()) == this.peer.getId())
                     this.peer.removeDeleteHistory(message);
                 break;

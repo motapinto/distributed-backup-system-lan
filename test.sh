@@ -80,4 +80,4 @@ esac
 
 # echo "java test.TestApp ${pap} ${oper} ${opernd_1} ${rep_deg}"
 
-java test.build/TestApp.class ${pap} ${oper} ${opernd_1} ${rep_deg}
+java test.TestApp ${pap} ${oper} ${opernd_1} ${rep_deg}

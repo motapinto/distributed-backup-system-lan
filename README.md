@@ -15,7 +15,6 @@ java -jar McastSnooper.jar 224.0.0.0:4445 224.0.0.1:4446 224.0.0.2:4447
 ```
 
 ### Launch a peer with the peer.sh script in the build folder (advised to run at least 3 peers)
-### to run another peer after the first one it is only necessary to change the id
 ```
 ./peer.sh <Version> <Id> <serviceName> <MCip> <MCport> <MDBip> <MDBport> <MDRip> <MDRport>
 
@@ -31,7 +30,6 @@ example:
 ./test.sh <serviceName> <operation> <operators>
 ```
 
-#Test examples
 
 ## Test BACKUP
 ```

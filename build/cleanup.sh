@@ -26,4 +26,3 @@ fi
 # For shell scripting try out the following tutorials of the Linux Documentation Project
 # Bash Guide for Beginners: https://tldp.org/LDP/Bash-Beginners-Guide/html/index.html
 # Advanced Bash Scripting: https://tldp.org/LDP/abs/html/
-

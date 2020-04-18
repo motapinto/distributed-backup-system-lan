@@ -1,47 +1,56 @@
 ## Compilation instructions:
 
 ### Run RMI
-The RMI is created programmatically on the peer 1, thus the peer 1 must be always active. No need to do anything here.
+The RMI is created programmatically on the peer 1, thus the peer 1 must start before all the others.
 
 ### Run Multicastsnooper
 ```
 java -jar McastSnooper.jar 224.0.0.0:4445 224.0.0.1:4446 224.0.0.2:4447
+
 ```
 
-### Launch peers script
+### Run compile.sh in the root of the project, the output of the compile will be found on the build folder
 ```
-bash peers.sh <Number of Peers> <Version> <MCip> <MCport> <MDBip> <MDBport> <MDRip> <MDRport>
+./compile.sh 
+```
+
+### Launch a peer with the peer.sh script in the build folder (advised to run at least 3 peers)
+### to run another peer after the first one it is only necessary to change the id
+```
+./peer.sh <Version> <Id> <serviceName> <MCip> <MCport> <MDBip> <MDBport> <MDRip> <MDRport>
+
+example:
+ ./peer.sh 1.0 1 remoteName 224.0.0.0 4445 224.0.0.1 4446 224.0.0.2 4447
+
 ```
 
 ## Testing instructions:
 
+### Start Test Client Application (TCA) with the test.sh script in the build folder
+```
+./test.sh <serviceName> <operation> <operators>
+```
 
-### Start Test Client Application (TCA)
-```
-bash tca.sh <Access Point> <Protocol> <operand1> <operand2>
-```
-
-
-To start the peer run the following command(advised to run at least 3 peers):
-```
-java Peer.InitPeer 1.0 1 224.0.0.0 4445 224.0.0.1 4446 224.0.0.2 4447
-```
+#Test examples
 
 ## Test BACKUP
 ```
-java TestingClientApplication.TCA 1 BACKUP 300kb.pdf 2
+./test.sh remoteName BACKUP ../TestFiles/Teste.png 3
 ```
 ## Test RESTORE
 ```
-java TestingClientApplication.TCA 1 RESTORE lbaw.pdf
+./test.sh remoteName RESTORE ../TestFiles/Teste.png
 ```
 ## Test DELETE
 ```
-java TestingClientApplication.TCA 1 DELETE lbaw.pdf
+./test.sh remoteName DELETE ../TestFiles/Teste.png 
+```
+## Test RECLAIM
+```
+./test.sh remoteName RECLAIM 0
 ```
 ## Test STATE
 ```
-java TestingClientApplication.TCA 1 STATE
+./test.sh remoteName STATE
 ```
 
-**Disclaimer** -  The scripts may not work on Windows. If that is the case you should install the Windows subsystem for Linux

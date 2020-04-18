@@ -14,7 +14,7 @@ argc=$#
 
 if ((argc == 1 ))
 then
-	rm -r "../storage"$1
+	rm -r "storage"$1
 else 
 	echo "Usage: $0 [<peer_id>]]"
 	exit 1

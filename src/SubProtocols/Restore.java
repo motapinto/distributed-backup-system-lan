@@ -107,9 +107,6 @@ public class Restore {
             this.getChunksProcedure();
             try {
                 Thread.sleep(3000);
-                System.out.println("After sleep");
-                System.out.println("Received : " + this.numberDistinctChunksReceived);
-                System.out.println("Necessary : " + this.numberOfChunks);
             }
             catch (InterruptedException e) {
                 e.printStackTrace();
@@ -194,17 +191,13 @@ public class Restore {
 
                         try {
                             while (this.enhancedSocket.getInputStream().available() != 0) { }
-                            try { System.out.println("SENDING CHUNK" + chunkMessage.getHeader().getChuckNo());
+                            try {
                                 this.dataOutStream.writeInt(chunkMessage.toBytes().length);
                                 this.dataOutStream.write(chunkMessage.toBytes());
-                                System.out.println("SENT CHUNK" + chunkMessage.getHeader().getChuckNo());
                             }
-                            catch (Exception e){
+                            catch (Exception e) {
                                 Logs.logError("Error while writing chuck message");
-                                System.err.println(e.getMessage());
                             }
-
-
                         } catch (IOException e) {
                             System.err.println(e.getMessage());
                         }
@@ -221,7 +214,6 @@ public class Restore {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         }
 
         // closing the socket used to send the CHUNK message
@@ -259,7 +251,7 @@ public class Restore {
      */
     public void saveChunkProcedure(Message message) {
 
-        if ((message.getHeader().getFileId().equals(this.fileId))){
+        if ((message.getHeader().getFileId().equals(this.fileId))) {
             if (chunks.get(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo()) == null) {
                 chunks.put(message.getHeader().getFileId() + "_" + message.getHeader().getChuckNo(), message.getBody());
                 this.numberDistinctChunksReceived++;
@@ -281,7 +273,6 @@ public class Restore {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -299,13 +290,11 @@ public class Restore {
         public void run() {
             try {
                 listener = new ServerSocket(this.restore.getPeer().getRestoreChannel().getPort());
-                while (true){
+                while (true) {
                     Runnable requestHandler = new RequestHandler(listener.accept(), this.restore);
                     this.restore.peer.getReceiverExecutor().submit(requestHandler);
-                    System.out.println("OPEN SOCKET");
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 try {
                     listener.close();
                     this.restore.setTcpConnectionActive(false);

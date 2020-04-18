@@ -73,8 +73,6 @@ public class SpaceReclaim {
             int peerStorer = Integer.parseInt(rawKey.split("_")[0]);
             if(peerStorer != this.peer.getId()) continue;
 
-            System.out.println("chunk Id: " + chunkId);
-
             String currRepDeg = repDegreeInfo.get(chunkId).split("_")[0];
             String desRepDeg = repDegreeInfo.get(chunkId).split("_")[1];
 

@@ -1,9 +1,5 @@
-# serverless-backup-system
+# distributed-backup-system-lan
 
-> **2019/2020** - 3rd Year, 2st Semester
->
-> **Course:** Sistemas Distribuidos: [SDIS page in sigarra](https://sigarra.up.pt/feup/en/ucurr_geral.ficha_uc_view?pv_ocorrencia_id=436451) | Distributed Systems
->
 > **Project developed by:**\
 > Martim Silva ([motapinto](https://github.com/motapinto)) \
 > José Guerra ([LockDownPT](https://github.com/LockDownPT))
@@ -44,25 +40,23 @@ example:
 ```
 ./test.sh <serviceName> <operation> <operators>
 ```
-
-
-## Test BACKUP
+### Test BACKUP
 ```
 ./test.sh remoteName BACKUP ../TestFiles/Teste.png 3
 ```
-## Test RESTORE
+### Test RESTORE
 ```
 ./test.sh remoteName RESTORE ../TestFiles/Teste.png
 ```
-## Test DELETE
+### Test DELETE
 ```
 ./test.sh remoteName DELETE ../TestFiles/Teste.png 
 ```
-## Test RECLAIM
+### Test RECLAIM
 ```
 ./test.sh remoteName RECLAIM 0
 ```
-## Test STATE
+### Test STATE
 ```
 ./test.sh remoteName STATE
 ```

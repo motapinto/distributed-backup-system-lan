@@ -1,4 +1,4 @@
-# distributed-backup-system-lan
+# Distributed Backup System for a local area network (LAN)
 
 > **Project developed by:**\
 > Martim Silva ([motapinto](https://github.com/motapinto)) \
